@@ -1,0 +1,43 @@
+%%% Graph the dmp, lte, and ja transformations for a dataset from a .h5
+%%% file
+
+%% Starting stuff %%
+filename = 'lasa_dataset.h5';
+pos_data = h5read(filename, '/Angle/demo1/pos');
+pos_x_data = pos_data(1, :);
+pos_y_data = pos_data(2, :);
+t_data = h5read(filename, '/Angle/demo1/t');
+
+%% dmp deformation %%
+hDMP_x = DiscreteDMP;
+hDMP_y = DiscreteDMP;
+%set starting positions
+dmp_deformed_x = -45;
+dmp_deformed_y = 0;
+for i = 1:(length(pos_x_data) - 1)
+    hDMP_x.generate_DMP(100, dmp_deformed_x(length(dmp_deformed_x)), pos_x_data(i + 1));
+    hDMP_y.generate_DMP(100, dmp_deformed_y(length(dmp_deformed_y)), pos_y_data(i + 1));
+    dmp_deformed_x = horzcat(dmp_deformed_x, hDMP_x.rollout());
+    dmp_deformed_y = horzcat(dmp_deformed_y, hDMP_y.rollout());
+end
+
+%% lte deformation %%
+traj = [pos_x_data; pos_y_data]';
+fixed_points = [1            ([-45 0]);
+                size(traj,1) traj(end,:)];
+[lte_deformed_x, lte_deformed_y] = lte(traj, fixed_points);
+
+%% ja deformation %%
+lambda = 8;
+[ja_deformed_x, ja_deformed_y] = filter_JA(traj, lambda);
+
+%% display all 4 (original, dmp, lte, ja) %%
+fh = figure;
+plot(pos_x_data, pos_y_data, 'k');
+hold on;
+plot(dmp_deformed_x, dmp_deformed_y, 'r');
+hold on;
+plot(lte_deformed_x, lte_deformed_y, 'g');
+hold on;
+plot(ja_deformed_x(:, 1), ja_deformed_y(:, 1), 'b');
+hold on;
