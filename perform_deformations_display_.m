@@ -12,31 +12,34 @@ t_data = h5read(filename, '/Angle/demo1/t');
 hDMP_x = DiscreteDMP;
 hDMP_y = DiscreteDMP;
 %set starting positions
-dmp_deformed_x = -45;
-dmp_deformed_y = 0;
+dmp_deformed_x = -50;
+dmp_deformed_y = 5;
 for i = 1:(length(pos_x_data) - 1)
     hDMP_x.generate_DMP(100, dmp_deformed_x(length(dmp_deformed_x)), pos_x_data(i + 1));
     hDMP_y.generate_DMP(100, dmp_deformed_y(length(dmp_deformed_y)), pos_y_data(i + 1));
     dmp_deformed_x = horzcat(dmp_deformed_x, hDMP_x.rollout());
     dmp_deformed_y = horzcat(dmp_deformed_y, hDMP_y.rollout());
 end
-
+hDMP_x.generate_DMP(100, dmp_deformed_x(length(dmp_deformed_x)), -5);
+hDMP_y.generate_DMP(100, dmp_deformed_y(length(dmp_deformed_y)), 5);
+dmp_deformed_x = horzcat(dmp_deformed_x, hDMP_x.rollout());
+dmp_deformed_y = horzcat(dmp_deformed_y, hDMP_y.rollout());
 %% lte deformation %%
 traj = [pos_x_data; pos_y_data]';
-lte_fixed_points = [1            ([-45 0]);
-                size(traj,1) traj(end,:)];
+lte_fixed_points = [1            ([-50 5]);
+                    size(traj,1) ([-5  5])];
 [lte_deformed_x, lte_deformed_y] = lte(traj, lte_fixed_points);
 
 %% ja deformation %%
-lambda = 8;
-ja_fixed_points = [-45 0; traj(end, :)];
+lambda = 5;
+ja_fixed_points = [-50 5; -5 5];
 [ja_deformed_x, ja_deformed_y] = filter_JA(traj, lambda, [], ja_fixed_points);
 
 %% display all 4 (original, dmp, lte, ja) %%
 fh = figure;
 plot(pos_x_data, pos_y_data, 'k');
 hold on;
-plot(dmp_deformed_x, dmp_deformed_y, 'r');
+plot(dmp_deformed_x, dmp_deformed_y, 'r--');
 hold on;
 plot(lte_deformed_x, lte_deformed_y, 'g');
 hold on;
