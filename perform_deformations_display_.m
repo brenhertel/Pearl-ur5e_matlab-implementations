@@ -12,18 +12,16 @@ t_data = h5read(filename, '/Angle/demo1/t');
 hDMP_x = DiscreteDMP;
 hDMP_y = DiscreteDMP;
 %set starting positions
-dmp_deformed_x = -50;
-dmp_deformed_y = 5;
-for i = 1:(length(pos_x_data) - 1)
-    hDMP_x.generate_DMP(100, dmp_deformed_x(length(dmp_deformed_x)), pos_x_data(i + 1));
-    hDMP_y.generate_DMP(100, dmp_deformed_y(length(dmp_deformed_y)), pos_y_data(i + 1));
-    dmp_deformed_x = horzcat(dmp_deformed_x, hDMP_x.rollout());
-    dmp_deformed_y = horzcat(dmp_deformed_y, hDMP_y.rollout());
-end
-hDMP_x.generate_DMP(100, dmp_deformed_x(length(dmp_deformed_x)), -5);
-hDMP_y.generate_DMP(100, dmp_deformed_y(length(dmp_deformed_y)), 5);
-dmp_deformed_x = horzcat(dmp_deformed_x, hDMP_x.rollout());
-dmp_deformed_y = horzcat(dmp_deformed_y, hDMP_y.rollout());
+hDMP_x.generate_DMP(10);
+hDMP_x.imitate_path(pos_x_data);
+hDMP_x.goal = -5;
+hDMP_x.y_0 = -50;
+dmp_deformed_x = hDMP_x.rollout();
+hDMP_y.generate_DMP(10);
+hDMP_y.goal = 5;
+hDMP_y.y_0 = 5;
+hDMP_y.imitate_path(pos_y_data);
+dmp_deformed_y = hDMP_y.rollout();
 %% lte deformation %%
 traj = [pos_x_data; pos_y_data]';
 lte_fixed_points = [1            ([-50 5]);

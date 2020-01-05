@@ -17,10 +17,10 @@ classdef DiscreteDMP < handle
         ddy; %acceleration
     end
     methods
-        function generate_DMP(obj, num_basis, given_y0, given_goal)
+        function generate_DMP(obj, num_basis)
             obj.n_bfs = num_basis;
-            obj.y_0 = given_y0;
-            obj.goal = given_goal;
+            %obj.y_0 = given_y0;
+            %obj.goal = given_goal;
             obj.w = zeros(1, obj.n_bfs);
             obj.beta_y = obj.alpha_y / 4;
             obj.timesteps = round(obj.cs.run_time / obj.dt);
@@ -46,10 +46,10 @@ classdef DiscreteDMP < handle
             obj.goal = obj.gen_goal(y_des);
             obj.check_offset();
             path = zeros(1, obj.timesteps);
-            x = linspace(0, obj.cs.run_time, len(y_des));
+            x = linspace(0, obj.cs.run_time, length(y_des));
             path_gen = interp1(x, y_des);
             for t = 1:obj.timesteps
-                path(t) = path_gen(t * obj.dt);
+                path(t) = path_gen(t) * obj.dt;
             end
             y_des = path;
             dy_des = diff(y_des) / obj.dt;
@@ -103,7 +103,14 @@ classdef DiscreteDMP < handle
             goal = y_des(length(y_des));
         end
         function psi = gen_psi(obj, x)
-            psi = exp(-obj.h * power(x - obj.c, 2));
+            %disp(size(x));
+            for i = 1:length(obj.c)
+                for j = 1:length(x)
+                %disp(exp(-obj.h * power(x(i) - obj.c, 2)));
+                    psi(i, j) = exp(-obj.h * power(x(j) - obj.c(i), 2));
+                %disp(psi);
+                end
+            end
         end
         function gen_weights(obj, f_target)
             x_track = obj.cs.rollout;
@@ -111,9 +118,10 @@ classdef DiscreteDMP < handle
             
             obj.w = zeros(1, obj.n_bfs);
             k = obj.goal - obj.y_0;
+            %disp(size(x_track' * psi_track(1,:)));
             for i = 1:obj.n_bfs
-                numer = sum(x_track * psi_track(i) * f_target);
-                denom = sum(power(x_track, 2) * psi_track(i));
+                numer = sum(x_track * psi_track(i,:)' * f_target);
+                denom = sum(power(x_track, 2) * psi_track(i,:)');
                 obj.w(i) = numer / (k * denom);
             end
             obj.w(isnan(obj.w)) = 0;
