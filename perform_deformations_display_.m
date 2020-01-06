@@ -13,14 +13,14 @@ hDMP_x = DiscreteDMP;
 hDMP_y = DiscreteDMP;
 %set starting positions
 hDMP_x.generate_DMP(10);
-hDMP_x.imitate_path(pos_x_data);
+dmp_imitate_x = hDMP_x.imitate_path(pos_x_data);
 hDMP_x.goal = -5;
 hDMP_x.y_0 = -50;
 dmp_deformed_x = hDMP_x.rollout();
 hDMP_y.generate_DMP(10);
 hDMP_y.goal = 5;
 hDMP_y.y_0 = 5;
-hDMP_y.imitate_path(pos_y_data);
+dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
 dmp_deformed_y = hDMP_y.rollout();
 %% lte deformation %%
 traj = [pos_x_data; pos_y_data]';
@@ -38,8 +38,6 @@ fh = figure;
 plot(pos_x_data, pos_y_data, 'k');
 hold on;
 plot(dmp_deformed_x, dmp_deformed_y, 'r--');
-hold on;
+plot(dmp_imitate_x, dmp_imitate_y, 'c--');
 plot(lte_deformed_x, lte_deformed_y, 'g');
-hold on;
 plot(ja_deformed_x(:, 1), ja_deformed_y(:, 1), 'b');
-hold on;

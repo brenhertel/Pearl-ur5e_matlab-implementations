@@ -6,7 +6,7 @@ classdef DiscreteDMP < handle
         h; %width of basis function
         % psi; %basis functions
         n_bfs; %number of basis functions
-        dt = 0.01; %timestep value
+        dt = 0.001; %timestep value
         w; %weights of basis function
         alpha_y = 25; %assumed default constant
         beta_y; %constant
@@ -47,7 +47,7 @@ classdef DiscreteDMP < handle
             obj.check_offset();
             path = zeros(1, obj.timesteps);
             x = linspace(0, obj.cs.run_time, length(y_des));
-            path_gen = interp1(x, y_des);
+            path_gen = interp1(x, y_des, x, 'spline');
             for t = 1:obj.timesteps
                 path(t) = path_gen(t) * obj.dt;
             end
