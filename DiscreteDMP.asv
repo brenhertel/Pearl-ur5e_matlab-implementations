@@ -85,6 +85,7 @@ classdef DiscreteDMP < handle
             y_track = zeros(1, n_timesteps);
             dy_track = zeros(1, n_timesteps);
             ddy_track = zeros(1, n_timesteps);
+            
             for t = 1: n_timesteps
                 [y_track(t), dy_track(t), ddy_track(t)] = obj.step(tau);
             end
@@ -133,6 +134,7 @@ classdef DiscreteDMP < handle
             for i = 1:obj.n_bfs
                 numer = sum(x_track * (psi_track(i,:))' * f_target);
                 denom = sum(power(x_track, 2) * (psi_track(i,:))');
+                %denom = sum(psi_track(i,:));
                 obj.w(i) = numer / (k * denom);
             end
             %Covnert any NaN's to 0's
