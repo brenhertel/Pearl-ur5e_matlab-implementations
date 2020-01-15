@@ -14,7 +14,7 @@ hDMP_x = DiscreteDMP;
 hDMP_y = DiscreteDMP;
 %generate DMP with 200 basis functions (increasing this number increases
 %how closely the generated trajectory follows the given trajectory)
-hDMP_x.generate_DMP(200);
+hDMP_x.generate_DMP(100);
 %Use the given path to generate weights
 dmp_imitate_x = hDMP_x.imitate_path(pos_x_data);
 %change start and goal positions
@@ -23,10 +23,10 @@ hDMP_x.y_0 = -50;
 %Generate deformed trajectory
 dmp_deformed_x = hDMP_x.rollout();
 %again for y
-hDMP_y.generate_DMP(200);
+hDMP_y.generate_DMP(100);
+dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
 hDMP_y.goal = 5;
 hDMP_y.y_0 = 5;
-dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
 dmp_deformed_y = hDMP_y.rollout();
 
 %% lte deformation %%
