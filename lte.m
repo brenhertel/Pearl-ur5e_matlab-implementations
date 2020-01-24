@@ -51,7 +51,7 @@ function [new_pos_x, new_pos_y] = lte(twoD_traj, fixed_points)
     
     % generate the two sides of the equation system
     [L,delta] = generateLaplacian(traj,fixedPos,fixedWeight,boundCond);
-       
+    %disp(delta)
     % plot trajectory and fixed sampling points
     %new_pos = traj';
     
@@ -105,6 +105,8 @@ function calcDeformedTraj()                                                 % ca
     global traj trajMod delta fixedPos fixedWeight boundCond
 
     [L,delta]    = generateLaplacian(traj,fixedPos,fixedWeight,boundCond);
+    %disp(L)
+    %disp(inv(L))
     trajMod(:,1) = L\delta(:,1);
     trajMod(:,2) = L\delta(:,2);
 end

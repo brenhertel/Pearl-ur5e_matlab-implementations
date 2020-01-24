@@ -9,28 +9,32 @@ pos_y_data = pos_data(2, :);
 t_data = h5read(filename, '/Angle/demo1/t');
 
 %% dmp deformation %%
-%create DMP objects
-hDMP_x = DiscreteDMP;
-hDMP_y = DiscreteDMP;
-%generate DMP with 200 basis functions (increasing this number increases
-%how closely the generated trajectory follows the given trajectory)
-hDMP_x.generate_DMP(100);
-%Use the given path to generate weights
-dmp_imitate_x = hDMP_x.imitate_path(pos_x_data);
-%change start and goal positions
-hDMP_x.goal = -5;
-hDMP_x.y_0 = -50;
-%Generate deformed trajectory
-dmp_deformed_x = hDMP_x.rollout();
-%again for y
-hDMP_y.generate_DMP(100);
-dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
-hDMP_y.goal = 5;
-hDMP_y.y_0 = 5;
-dmp_deformed_y = hDMP_y.rollout();
+% %create DMP objects
+% hDMP_x = DiscreteDMP;
+% hDMP_y = DiscreteDMP;
+% %generate DMP with 200 basis functions (increasing this number increases
+% %how closely the generated trajectory follows the given trajectory)
+% hDMP_x.generate_DMP(100);
+% %Use the given path to generate weights
+% dmp_imitate_x = hDMP_x.imitate_path(pos_x_data);
+% %change start and goal positions
+% hDMP_x.goal = -5;
+% hDMP_x.y_0 = -50;
+% %Generate deformed trajectory
+% dmp_deformed_x = hDMP_x.rollout();
+% %again for y
+% hDMP_y.generate_DMP(100);
+% dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
+% hDMP_y.goal = 5;
+% hDMP_y.y_0 = 5;
+% dmp_deformed_y = hDMP_y.rollout();
+dmp_deformed_x = dmp(pos_x_data, t_data, 100, -50, -5);
+dmp_deformed_y = dmp(pos_y_data, t_data, 100, 5, 5);
+
 
 %% lte deformation %%
 traj = [pos_x_data; pos_y_data]';
+disp(size(traj));
 lte_fixed_points = [1            ([-50 5]);
                     size(traj,1) ([-5  5])];
 [lte_deformed_x, lte_deformed_y] = lte(traj, lte_fixed_points);
@@ -45,6 +49,5 @@ fh = figure;
 plot(pos_x_data, pos_y_data, 'k');
 hold on;
 plot(dmp_deformed_x, dmp_deformed_y, 'r--');
-plot((1/hDMP_x.dt) * dmp_imitate_x, (1/hDMP_y.dt) * dmp_imitate_y, 'c--');
 plot(lte_deformed_x, lte_deformed_y, 'g');
 plot(ja_deformed_x(:, 1), ja_deformed_y(:, 1), 'b');

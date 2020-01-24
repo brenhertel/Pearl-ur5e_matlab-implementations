@@ -26,4 +26,6 @@ function dydt=MSDAccuracy_DE(t,y,lambda,funct,direction)
 p=length(y);
 target=funct(t); % if target is nan (disappears) move according to based functional, i.e. no accuracy is required
 dydt=[y(2:end)', direction*lambda^p*(y(1)-target)]; % Matlab 2013
+%disp('target')
+%disp(target)
 
