@@ -169,12 +169,12 @@ switch lower(action),
             %dcps(ID).alpha_x = dcps(ID).alpha_z/3;
             %dcps(ID).alpha_v = dcps(ID).alpha_z;
             %dcps(ID).beta_v  = dcps(ID).beta_z;
-            dcps(ID).alpha_z = 10;
-            dcps(ID).beta_z  = dcps(ID).alpha_z/4;
-            dcps(ID).alpha_g = 1;%?
-            dcps(ID).alpha_x = 1;
-            dcps(ID).alpha_v = dcps(ID).alpha_z;%?
-            dcps(ID).beta_v  = dcps(ID).beta_z;%?
+            dcps(ID).alpha_z = varargin{5};
+            dcps(ID).beta_z  = varargin{6};
+            dcps(ID).alpha_g = varargin{7};%?
+            dcps(ID).alpha_x = varargin{8};
+            dcps(ID).alpha_v = varargin{9};%?
+            dcps(ID).beta_v  = varargin{10};%?
             % initialize the state variables
             dcps(ID).z       = 0;
             dcps(ID).y       = 0;
