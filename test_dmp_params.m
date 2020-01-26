@@ -28,121 +28,198 @@ acc_y(length(pos_y_data)) = 0;
 
 %% Deformation %%
 
-
+dt = 0.1;
+tau = 0.5;
 n_rfs = 100;
+optimal_dt = dt;
+optimal_tau = tau;
+optimal_n_rfs = n_rfs;
 
-alpha_z = 1;
-beta_z  = 1;
-alpha_g = 1;
-alpha_x = 1;
-alpha_v = 1;
-beta_v  = 1;
+% alpha_z = 1;
+% beta_z  = 1;
+% alpha_g = 1;
+% alpha_x = 1;
+% alpha_v = 1;
+% beta_v  = 1;
+%
+% optimal_alpha_z = alpha_z;
+% optimal_beta_z  = beta_z;
+% optimal_alpha_g = alpha_g;
+% optimal_alpha_x = alpha_x;
+% optimal_alpha_v = alpha_v;
+% optimal_beta_v  = beta_v;
 
-optimal_alpha_z = alpha_z;
-optimal_beta_z  = beta_z;
-optimal_alpha_g = alpha_g;
-optimal_alpha_x = alpha_x;
-optimal_alpha_v = alpha_v;
-optimal_beta_v  = beta_v;
+%Run 1 Results:
+optimal_alpha_z = 105;
+%optimal_beta_z  = 6.3;
+optimal_beta_z = alpha_z / 4;
+optimal_alpha_g = .01;
+optimal_alpha_x = .01;
+optimal_alpha_v = .01;
+optimal_beta_v  = .01;
 
-base_x = dmp_xtra(pos_x_data, vel, acc, n_rfs, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v);
-base_y = dmp_xtra(pos_y_data, vel, acc, n_rfs, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v);
+alpha_z = optimal_alpha_z;
+beta_z  = optimal_beta_z;
+alpha_g = optimal_alpha_g;
+alpha_x = optimal_alpha_x;
+alpha_v = optimal_alpha_v;
+beta_v  = optimal_beta_v;
 
-dist_diff = calc_sum_dist(pos_x_data, pos_y_data, base_x, base_y);
-optimal_dist_diff = dist_diff;
+base_x = dmp_xtra(pos_x_data, vel_x, acc_x, n_rfs, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dt, tau);
+base_y = dmp_xtra(pos_y_data, vel_y, acc_y, n_rfs, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dt, tau);
+
+base_dist_diff = calc_sum_dist(pos_x_data, pos_y_data, base_x, base_y);
+optimal_dist_diff = base_dist_diff;
 fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-    alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
+    alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, base_dist_diff);
 
-for alpha_z = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+best_curr_dist = base_dist_diff;
+for n_rfs = 100:500
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_dt, optimal_tau);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, n_rfs, alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_dt, optimal_tau);
+    
+    dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
+    fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, n_rfs = %d, dt = %f, tau = %f\n path difference = %f\n', ...
+        alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, n_rfs, optimal_dt, optimal_tau, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_n_rfs = n_rfs;
+        best_curr_dist = dist_diff;
+    end
+end
+best_curr_dist = base_dist_diff;
+for dt = 0.1:0.1:10
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, dt, optimal_tau);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, dt, optimal_tau);
+    
+    dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
+    fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, n_rfs = %d, dt = %f, tau = %f\n path difference = %f\n', ...
+        alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_n_rfs, dt, optimal_tau, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_dt = dt;
+        best_curr_dist = dist_diff;
+    end
+end
+best_curr_dist = base_dist_diff;
+for tau = 0.1:0.1:10
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_dt, tau);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_dt, tau);
+    
+    dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
+    fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, n_rfs = %d, dt = %f, tau = %f\n path difference = %f\n', ...
+        alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, optimal_n_rfs, optimal_dt, tau, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_tau = tau;
+        best_curr_dist = dist_diff;
+    end
+end
+
+best_curr_dist = base_dist_diff;
+for alpha_z = 100:0.1:110
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, alpha_z, optimal_beta_z, optimal_alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, alpha_z, optimal_beta_z, optimal_alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
+        alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, dist_diff);
+    if dist_diff < best_curr_dist
         optimal_alpha_z = alpha_z;
-        optimal_dist_diff = dist_diff;
+        best_curr_dist = dist_diff;
     end
 end
 
-for beta_z = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+best_curr_dist = base_dist_diff;
+for beta_z = 1.3:0.1:11.3
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, beta_z, optimal_alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, beta_z, optimal_alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
-        optimal_alpha_z = beta_z;
-        optimal_dist_diff = dist_diff;
+        optimal_alpha_z, beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, dist_diff);
+    best_curr_dist = base_dist_diff;
+    if dist_diff < best_curr_dist
+        optimal_beta_z = beta_z;
     end
 end
 
-for alpha_g = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+best_curr_dist = base_dist_diff;
+for alpha_g = 0.01:0.01:2
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, alpha_g, ...
         optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
-        optimal_alpha_z = alpha_g;
-        optimal_dist_diff = dist_diff;
+        optimal_alpha_z, optimal_beta_z, alpha_g, optimal_alpha_x, optimal_alpha_v, optimal_beta_v, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_alpha_g = alpha_g;
+        best_curr_dist = dist_diff;
     end
 end
 
-for alpha_x = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
+best_curr_dist = base_dist_diff;
+for alpha_x = 0.01:0.01:2
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        alpha_x, optimal_alpha_v, optimal_beta_v);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        alpha_x, optimal_alpha_v, optimal_beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
-        optimal_alpha_z = alpha_x;
-        optimal_dist_diff = dist_diff;
+        optimal_alpha_z, optimal_beta_z, optimal_alpha_g, alpha_x, optimal_alpha_v, optimal_beta_v, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_alpha_x = alpha_x;
+        best_curr_dist = dist_diff;
     end
 end
 
-for alpha_v = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
+best_curr_dist = base_dist_diff;
+for alpha_v = 0.01:0.01:2
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, alpha_v, optimal_beta_v);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, alpha_v, optimal_beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
-        optimal_alpha_z = alpha_v;
-        optimal_dist_diff = dist_diff;
+        optimal_alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, alpha_v, optimal_beta_v, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_alpha_v = alpha_v;
+        best_curr_dist = dist_diff;
     end
 end
 
-for beta_v = 0.1:0.1:10
-    x = dmp_xtra(pos_x_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
-    y = dmp_xtra(pos_y_data, vel, acc, n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
-        optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
+best_curr_dist = base_dist_diff;
+for beta_v = 0.01:0.01:2
+    x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, beta_v);
+    y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+        optimal_alpha_x, optimal_alpha_v, beta_v);
     
     dist_diff = calc_sum_dist(pos_x_data, pos_y_data, x, y);
     fprintf('alpha_z = %f, beta_z  = %f, alpha_g = %f,\n alpha_x = %f, alpha_v = %f, beta_v  = %f,\n, path difference = %f\n', ...
-        alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v, dist_diff);
-    if dist_diff < optimal_dist_diff
-        optimal_alpha_z = beta_v;
-        optimal_dist_diff = dist_diff;
+        optimal_alpha_z, optimal_beta_z, optimal_alpha_g, optimal_alpha_x, optimal_alpha_v, beta_v, dist_diff);
+    if dist_diff < best_curr_dist
+        optimal_beta_v = beta_v;
+        best_curr_dist = dist_diff;
     end
 end
 
+x = dmp_xtra(pos_x_data, vel_x, acc_x, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+    optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
+y = dmp_xtra(pos_y_data, vel_y, acc_y, optimal_n_rfs, optimal_alpha_z, optimal_beta_z, optimal_alpha_g, ...
+    optimal_alpha_x, optimal_alpha_v, optimal_beta_v);
+plot(pos_x_data, pos_y_data, 'b', x, y, 'c');
 function dist_diff = calc_sum_dist(x1, y1, x2, y2)
 dist_diff = 0;
 for i = 1:length(x1)
@@ -150,12 +227,12 @@ for i = 1:length(x1)
 end
 end
 
-function new_traj = dmp_xtra(traj, vel, acc, num_basis, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v)
+function new_traj = dmp_xtra(traj, vel, acc, num_basis, alpha_z, beta_z, alpha_g, alpha_x, alpha_v, beta_v,dt, tau)
 %% Deformation %%
 
 % general parameters
-dt        = 0.01;
-tau       = 0.5;
+%dt        = 0.01;
+%tau       = 0.5;
 n_rfs     = num_basis;
 ID        = 1;
 goal      = traj(length(traj));
