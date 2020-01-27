@@ -5,15 +5,22 @@ classdef CanonicalSystem < handle
         alpha_x = 1; %maybe change to 5?
         dt = .01
         run_time = 1
-        %timesteps = round(obj.run_time / obj.dt);
         x = 1;
     end
     methods
+        function change_params(obj, varargin)
+            if (length(varargin) > 0)
+                obj.alpha_x = varargin{1};
+            end
+            if (length(varargin) > 1)
+                obj.dt = varargin{2};
+            end
+        end
         function reset_state(obj)
             obj.x = 1;
         end
         function out_x = step(obj, tau)
-            obj.x = obj.x + (-obj.alpha_x * obj.x) * tau * obj.dt;
+            obj.x = obj.x + ((-obj.alpha_x * obj.x) / tau)  * obj.dt;
             out_x = obj.x;
         end
         function x_track = rollout(obj, tau)
@@ -30,7 +37,7 @@ classdef CanonicalSystem < handle
                 else
                     obj.step(1);
                 end
-            end 
+            end
             obj.reset_state();
         end
     end

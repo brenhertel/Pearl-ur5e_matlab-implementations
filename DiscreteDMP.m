@@ -137,6 +137,7 @@ classdef DiscreteDMP < handle
             end
             %Covnert any NaN's to 0's
             obj.w(isnan(obj.w)) = 0;
+            disp(obj.w);
         end
     end
 end
