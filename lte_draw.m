@@ -41,3 +41,12 @@ lte_fixed_points = [1                    ([x(1) -1]);
 
 [lte_deformed_x, lte_deformed_y] = lte(traj, lte_fixed_points);
 plot(x, y, 'b.', lte_deformed_x, lte_deformed_y, 'r--');
+figure;
+for i = 1:len
+    d = calc_euclidean(x(i), y(i), lte_deformed_x(i), lte_deformed_y(i));
+    plot(i, d, 'g.');
+    hold on;
+end
+function d = calc_euclidean(x1, y1, x2, y2) 
+d = sqrt(power(x1 - x2, 2) + power(y1-y2, 2));
+end
