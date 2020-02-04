@@ -1,5 +1,5 @@
 %%% spline draw %%%
-filename = 'new_hello_trajectory.h5';
+filename = 'hello2.h5';
 
 x = h5read(filename, '/hello/x');
 y = h5read(filename, '/hello/y');
