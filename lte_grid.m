@@ -1,6 +1,6 @@
 %% lte grid deformations %%%
 clear all;
-filename = 'hello2.h5';
+filename = 'h5 files/hello2.h5';
 
 x = h5read(filename, '/hello/resampled_x');
 y = h5read(filename, '/hello/resampled_y');
@@ -10,7 +10,7 @@ len = length(x);
 init_end_d = calc_euclidean(x(1), y(1), x(len), y(len));
 %disp(init_end_d);
 
-grid_size = 5;
+grid_size = 1;
 grid_increment = init_end_d / grid_size;
 grid_x = zeros(grid_size, 1);
 grid_y = zeros(grid_size, 1);
