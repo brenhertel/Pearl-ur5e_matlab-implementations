@@ -37,23 +37,23 @@ dt = 0.001;
 cs_alpha = 1;
 tau = 1;
 
-hDMP_x = pastor_dmp;
-hDMP_y = pastor_dmp;
+hDMP_x = DiscreteDMP;
+hDMP_y = DiscreteDMP;
 %generate DMP with 200 basis functions (increasing this number increases
 %how closely the generated trajectory follows the given trajectory)
-hDMP_x.generate_DMP(2, D, K, cs_alpha, dt, tau);
+hDMP_x.generate_DMP(200);
+hDMP_y.generate_DMP(200);
 %Use the given path to generate weights
 dmp_imitate_x = hDMP_x.imitate_path(pos_x_data);
+dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
 %change start and goal positions
 hDMP_x.goal = -5;
 hDMP_x.y_0 = -50;
 %Generate deformed trajectory
 dmp_deformed_x = hDMP_x.rollout();
 %again for y
-hDMP_y.generate_DMP(2, D, K, cs_alpha, dt, tau);
-dmp_imitate_y = hDMP_y.imitate_path(pos_y_data);
 hDMP_y.goal = 5;
-hDMP_y.y_0 = 5;
+hDMP_y.y_0 = 0;
 dmp_deformed_y = hDMP_y.rollout();
 
 %% lte deformation %%

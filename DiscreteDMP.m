@@ -8,7 +8,7 @@ classdef DiscreteDMP < handle
         n_bfs; %number of basis functions
         dt = 0.001; %timestep value
         w; %weights of basis function
-        alpha_y = 100; %assumed default constant
+        alpha_y = 25; %assumed default constant
         beta_y; %constant
         cs = CanonicalSystem; %canonical system
         timesteps; %number of timesteps
@@ -18,6 +18,7 @@ classdef DiscreteDMP < handle
     end
     methods
         function generate_DMP(obj, num_basis)
+            obj.cs.change_params(obj.alpha_y, .0001);
             obj.n_bfs = num_basis;
             %obj.y_0 = given_y0;
             %obj.goal = given_goal;
@@ -28,8 +29,11 @@ classdef DiscreteDMP < handle
             obj.reset_state();
             %setup center and variance of basis functions
             obj.gen_centers();
+            %dcps(ID).psi = exp(-0.5*((dcps(ID).x-dcps(ID).c).^2).*dcps(ID).D);
             obj.h = ones(1, obj.n_bfs);
-            obj.h = obj.h * power(obj.n_bfs, 1.5) / obj.c / obj.cs.alpha_x; %guess?
+            obj.h = (obj.h * power(obj.n_bfs, 1.5)) / obj.c / obj.cs.alpha_x; %guess?
+            %obj.h       = (diff(obj.c)*0.55).^2;
+            %obj.h       = 1./[obj.h ;obj.h(end)];
             obj.check_offset();
         end
         function reset_state(obj)
@@ -137,7 +141,7 @@ classdef DiscreteDMP < handle
             end
             %Covnert any NaN's to 0's
             obj.w(isnan(obj.w)) = 0;
-            disp(obj.w);
+            %disp(obj.w);
         end
     end
 end

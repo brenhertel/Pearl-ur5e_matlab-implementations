@@ -3,7 +3,7 @@
 classdef CanonicalSystem < handle
     properties
         alpha_x = 1; %maybe change to 5?
-        dt = .01
+        dt = .05
         run_time = 1
         x = 1;
     end
