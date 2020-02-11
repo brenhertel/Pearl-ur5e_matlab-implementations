@@ -18,7 +18,9 @@ def perform_dmp(traj, given_points=0):
   if given_points != 0:
     dmp.y0[0] = given_points[0]
     dmp.goal[0] = given_points[1]
+  print('Start: %f, end: %f' % (dmp.y0[0], dmp.goal[0]))
   y_track, dy_track, ddy_track = dmp.rollout()
+  print('Start: %f, end: %f' % (y_track[0], y_track[len(y_track) - 1]))
   return y_track
 
 #in-file testing
