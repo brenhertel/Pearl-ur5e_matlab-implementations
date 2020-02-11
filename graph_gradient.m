@@ -1,5 +1,6 @@
+function graph_gradient(grid_size, fd, hd, name)
 %%% gradient representation of similarity metrics %%%
-img_increment = 50;
+img_increment = round(1000 / grid_size);
 imgfd = zeros(grid_size * img_increment, grid_size * img_increment);
 imghd = zeros(grid_size * img_increment, grid_size * img_increment);
 for i = 1:grid_size
@@ -15,8 +16,9 @@ end
 figure;
 imgfd = uint8(imgfd);
 imshow(imgfd);
-title('Frechet Distance Gradient');
+title([name ' Frechet Distance Gradient']);
 figure;
 imghd = uint8(imghd);
 imshow(imghd);
-title('Hausdorff Distance Gradient');
+title([name ' Hausdorff Distance Gradient']);
+end

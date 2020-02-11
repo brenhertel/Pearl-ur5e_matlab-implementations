@@ -73,27 +73,16 @@ end
 % end
 
 
-function out = constrain(in, lower, upper)
-if (in < lower)
-    out = lower;
-elseif (in > upper)
-    out = upper;
-else
-    out = in;
-end
-end
 
-function max_frech = calc_frechet(x1, y1, x2, y2, first, last)
-distances = zeros(1, last-first);
-for i=first:last
-    for j =  first:last
-        curr_distance(j) = calc_euclidean(x1(i), y1(i), x2(j), y2(j));
-    end
-    distances(i) = min(curr_distance);
-end
-max_frech = max(distances);
-end
 
-function d = calc_euclidean(x1, y1, x2, y2)
-d = sqrt(power(x1 - x2, 2) + power(y1-y2, 2));
-end
+% function max_frech = calc_frechet(x1, y1, x2, y2, first, last)
+% distances = zeros(1, last-first);
+% for i=first:last
+%     for j =  first:last
+%         curr_distance(j) = calc_euclidean(x1(i), y1(i), x2(j), y2(j));
+%     end
+%     distances(i) = min(curr_distance);
+% end
+% max_frech = max(distances);
+% end
+
