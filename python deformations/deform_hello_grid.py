@@ -7,6 +7,7 @@ import lte
 import ja
 import dmp
 import perform_all_deformations as pad
+import math
 
 class point(object):
   def __init__(self, given_x=0, given_y=0):
@@ -58,9 +59,9 @@ def main():
     plt.figure(0)
     plt.plot(x_data, y_data)
     
-    grid_size = 3
+    grid_size = 2
     center = point(x_data[0], y_data[0])
-    grid = create_grid(grid_size, .3, .3, center)
+    grid = create_grid(grid_size, .1, .1, center)
     #for i in range (grid_size):
     #    for j in range (grid_size):
             #print('Point (%d, %d)' % (i, j))  
@@ -71,6 +72,7 @@ def main():
     #print('Middle Point: (%f, %f)' % (grid[2][2].x, grid[2][2].y))  
     #plt.show()
     
+    dmp_end_off = 0;
     
     #base_deform_x = deformation(x_data)
     #base_deform_y = deformation(y_data)
@@ -105,6 +107,12 @@ def main():
             #plt.plot(base_deform_x.ja, base_deform_y.ja, 'r')
             #plt.plot(base_deform_x.dmp, base_deform_y.dmp, 'm')
             #plt.show()
+            diff_x = abs(base_deform_x.traj[len(base_deform_x.traj) - 1] - base_deform_x.dmp[len(base_deform_x.dmp) - 1])
+            diff_y = abs(base_deform_y.traj[len(base_deform_y.traj) - 1] - base_deform_y.dmp[len(base_deform_y.dmp) - 1])
+            diff_xy = math.sqrt(diff_x**2 + diff_y**2)
+            dmp_end_off = dmp_end_off + diff_xy;
+    normalized_dmp_end_off = dmp_end_off / grid_size
+    print('normalized_dmp_end_off: %f' % (normalized_dmp_end_off))
     fp.close()
     plt.show()
     
