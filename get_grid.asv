@@ -28,6 +28,6 @@ h5write(filename, '/ja_fd', ja_fd_mat);
 h5create(filename,'/dmp_hd',[10 10]);
 h5write(filename, '/dmp_hd', dmp_hd_mat);
 h5create(filename,'/lte_hd',[10 10]);
-h5write(filename, '/lte_hd', lte_hd_mat);
+h5write(filename, '/lte_hd', dmp_fd_mat);
 h5create(filename,'/ja_hd',[10 10]);
-h5write(filename, '/ja_hd', ja_hd_mat);
+h5write(filename, '/ja_hd', dmp_fd_mat);
