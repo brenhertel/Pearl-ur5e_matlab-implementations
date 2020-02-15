@@ -1,0 +1,29 @@
+LinkedList::LinkedList(const LinkedList &l)
+{
+	ListNode* temp = l.getHead();
+	int i = 0;
+	while (temp != nullptr) {
+		i++;
+		temp = temp->getNext();
+	}
+	int* data_arr = (int*)malloc(sizeof(int) * i);
+	temp = l.getHead();
+	int j;
+	for (j = 0; j < i; j++) {
+		data_arr[j] = temp->getData();
+		temp = temp->getNext();
+	}
+	LinkedList cp_list(data_arr, j);
+	head = cp_list.getHead();
+	free(data_arr);
+}
+
+
+LinkedList::~LinkedList() {
+	ListNode* temp = head;
+	while (temp != nullptr) {
+		ListNode* temp_last = temp;
+		temp = temp->getNext();
+		delete temp_last;
+	}
+}
