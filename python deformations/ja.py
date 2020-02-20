@@ -138,6 +138,22 @@ def perform_ja(traj, given_points=[], l=8.0):
   del hJA
   return new_traj
 
+def perform_ja_improved(traj, initial=[], end=[], lmbda=-1.0):
+  #set up endpoints if none specified
+  if not initial:
+    initial = traj[0]
+  if not end:
+    end = traj[max(np.shape(traj)) - 1]
+  #transpose if necessary
+  if len(np.shape(traj)) > 1:
+    if np.shape(traj)[0] > np.shape(traj)[1]:
+      traj = np.transpose(traj)
+  traj = np.reshape(traj, (1, max(np.shape(traj))))
+  ## JA ##
+  ja_fixed_points = generate_ja_fixed_points(np.array([[initial], [end]]))
+  ja_traj = perform_ja(traj, ja_fixed_points, lmbda)
+  return ja_traj
+
 #in-file testing
 def main():
   traj = np.array(np.linspace(1, 25, 100)).reshape(1, 100)
