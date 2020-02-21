@@ -40,7 +40,7 @@ def main():
     #Constants--can be changed
     grid_x_dist = 0.5
     grid_y_dist = 0.5
-    grid_size = 10;
+    grid_size = 5;
     #Center should always be start of traj
     center = deform_hello_grid.point(x_data[0], y_data[0])
     grid = deform_hello_grid.create_grid(grid_size, grid_x_dist, grid_y_dist, center)
@@ -110,10 +110,41 @@ def main():
     hd_ja = np.ones((np.shape(hd_ja))) - (hd_ja / max_hd)
     ## plot results ##
     print('Plotting Results')
+    #plot deformations & store in h5
+    print(filename + '_grid' + str(grid_size) + '.h5')
+    fp = h5py.File (filename + '_grid' + str(grid_size) + '.h5', 'w')
+    dset_name = 'hello'
+    for i in range (grid_size):
+        for j in range (grid_size):
+            ax = plt.subplot2grid((grid_size, grid_size), (i, j))
+            ax.plot(grid_deforms_x[i][j].traj, grid_deforms_y[i][j].traj, 'b')
+            ax.plot(grid_deforms_x[i][j].lte, grid_deforms_y[i][j].lte, 'g')
+            ax.plot(grid_deforms_x[i][j].ja, grid_deforms_y[i][j].ja, 'r')
+            if is_dmp_on:
+                ax.plot(grid_deforms_x[i][j].ja, grid_deforms_y[i][j].ja, 'm')
+            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].traj)
+            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].traj)
+            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].lte)
+            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].lte)
+            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].ja)
+            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].ja)
+            if is_dmp_on:
+                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms[i][j].x.dmp)
+                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms[i][j].y.dmp)
+    plt.show()
+    #store hd/fd data in h5
+    fp.create_dataset(dset_name + '/lte/fd', data=fd_lte)
+    fp.create_dataset(dset_name + '/lte/hd', data=hd_lte)
+    fp.create_dataset(dset_name + '/ja/fd', data=fd_ja)
+    fp.create_dataset(dset_name + '/ja/hd', data=hd_ja)
+    if is_dmp_on:
+        fp.create_dataset(dset_name + '/dmp/fd', data=fd_dmp)
+        fp.create_dataset(dset_name + '/dmp/hd', data=hd_dmp)
     x_vals = starts_x[0, :]
     y_vals = starts_y[:, 0]
     xnew = np.linspace(x_vals[0], x_vals[grid_size - 1], 1000)
     ynew = np.linspace(y_vals[0], y_vals[grid_size - 1], 1000)
+    X, Y = np.meshgrid(xnew, ynew)
     #interpolate functions & plot interpolations
     fd_lte_func = interp2d(x_vals, y_vals, fd_lte)
     fd_lte_plot = fd_lte_func(xnew, ynew)
@@ -135,13 +166,27 @@ def main():
     #how to show which sirface is better at a single point?
     #different color maps
     #how do I show hd vs. fd?
-    ax.plot_surface(xnew, ynew, fd_lte_plot,cmap='viridis', edgecolor='none')
-    ax.set_title('Surface plot')
+    f_size = 32
+    ax.plot_surface(X, Y, fd_lte_plot,cmap='viridis', edgecolor='none')
+    ax.set_title('LTE Frechet Distance', fontsize=f_size)
     plt.show()
-    
-    ax = plt.axes(projection='3d')
-    ax.contour3D(xnew, ynew, fd_lte_plot, 50, cmap='binary')
+    ax.plot_surface(X, Y, hd_lte_plot,cmap='viridis', edgecolor='none')
+    ax.set_title('LTE Haussdorf Distance', fontsize=f_size)
     plt.show()
+    ax.plot_surface(X, Y, fd_ja_plot,cmap='viridis', edgecolor='none')
+    ax.set_title('JA Frechet Distance', fontsize=f_size)
+    plt.show()
+    ax.plot_surface(X, Y, hd_ja_plot,cmap='viridis', edgecolor='none')
+    ax.set_title('JA Haussdorf Distance', fontsize=f_size)
+    plt.show()
+    if is_dmp_on:
+        ax.plot_surface(X, Y, fd_dmp_plot,cmap='viridis', edgecolor='none')
+        ax.set_title('DMP Frechet Distance', fontsize=f_size)
+        plt.show()
+        ax.plot_surface(X, Y, hd_dmp_plot,cmap='viridis', edgecolor='none')
+        ax.set_title('DMP Haussdorf Distance', fontsize=f_size)
+        plt.show()
+    fp.close()
 
 if __name__ == '__main__':
   main()
