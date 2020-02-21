@@ -15,7 +15,7 @@ class point(object):
     self.x = given_x; 
     
 class deformation(object):
-    def __init__(self, given_traj, given_initial=[], given_final=[]):
+    def __init__(self, given_traj, given_initial=[], given_final=[], given_lambda=-1.0, dmp_on=True):
         self.traj = given_traj
         self.traj_length = len(self.traj)
         self.max_index = self.traj_length - 1
@@ -27,7 +27,10 @@ class deformation(object):
             self.final = self.traj[self.max_index]
         else:
             self.final = given_final
-        [self.lte, self.ja, self.dmp] = pad.perform_all_deformations(self.traj, self.initial, self.final)
+        if dmp_on == True:
+            [self.lte, self.ja, self.dmp] = pad.perform_all_deformations(self.traj, self.initial, self.final, lmbda=given_lambda)
+        else:
+            [self.lte, self.ja] = pad.perform_all_deformations_no_dmp(self.traj, self.initial, self.final, lmbda=given_lambda)
 
 def create_grid(grid_size, grid_x_dist, grid_y_dist, center):
     grid = [[point() for i in range (grid_size)] for j in range (grid_size)]
@@ -40,8 +43,8 @@ def create_grid(grid_size, grid_x_dist, grid_y_dist, center):
     for i in range (grid_size):
         for j in range (grid_size):
             #grid[i][j] = point(x_vals[j], y_vals[grid_size - 1 - i])
-            grid[i][j].x = x_vals[j]
-            grid[i][j].y = y_vals[grid_size - 1 - i]
+            grid[j][i].x = x_vals[j]
+            grid[j][i].y = y_vals[grid_size - 1 - i]
     return grid
     
 

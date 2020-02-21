@@ -46,6 +46,26 @@ def perform_all_deformations(traj, initial=[], end=[], lmbda=-1.0):
   dmp_traj = dmp.perform_dmp(traj, [initial, end])
   return [lte_traj, ja_traj, dmp_traj]
 
+def perform_all_deformations_no_dmp(traj, initial=[], end=[], lmbda=-1.0):
+  #set up endpoints if none specified
+  if not initial:
+    initial = traj[0]
+  if not end:
+    end = traj[max(np.shape(traj)) - 1]
+  #transpose if necessary
+  if len(np.shape(traj)) > 1:
+    if np.shape(traj)[0] > np.shape(traj)[1]:
+      traj = np.transpose(traj)
+  traj = np.reshape(traj, (1, max(np.shape(traj))))
+  ## LTE ##
+  indeces = [1, max(np.shape(traj)) - 1]
+  lte_fixed_points = lte.generate_lte_fixed_points(indeces, [initial, end])
+  lte_traj = lte.perform_lte(traj, lte_fixed_points)
+  ## JA ##
+  ja_fixed_points = ja.generate_ja_fixed_points(np.array([[initial], [end]]))
+  ja_traj = ja.perform_ja(traj, ja_fixed_points, lmbda)
+  return [lte_traj, ja_traj]
+
 def main():
   ## Undeformed ##
   #retrive data from file
