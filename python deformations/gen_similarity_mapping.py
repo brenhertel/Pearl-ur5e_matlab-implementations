@@ -180,30 +180,40 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
         fd_dmp_plot = fd_dmp_func(xnew, ynew)
         hd_dmp_func = interp2d(x_vals, y_vals, hd_dmp)
         hd_dmp_plot = hd_dmp_func(xnew, ynew)
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
     #plot all three on a single plot?
     #have all seperate plots?
     #how to show which sirface is better at a single point?
     #different color maps
     #how do I show hd vs. fd?
     f_size = 32
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, fd_lte_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' LTE Frechet Distance', fontsize=f_size)
     plt.show()
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, hd_lte_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' LTE Haussdorf Distance', fontsize=f_size)
     plt.show()
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, fd_ja_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' JA Frechet Distance', fontsize=f_size)
     plt.show()
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, hd_ja_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' JA Haussdorf Distance', fontsize=f_size)
     plt.show()
     if is_dmp_on:
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
         ax.plot_surface(X, Y, fd_dmp_plot,cmap='viridis', edgecolor='none')
         ax.set_title(name + ' DMP Frechet Distance', fontsize=f_size)
         plt.show()
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
         ax.plot_surface(X, Y, hd_dmp_plot,cmap='viridis', edgecolor='none')
         ax.set_title(name + ' DMP Haussdorf Distance', fontsize=f_size)
         plt.show()
@@ -227,7 +237,7 @@ def main():
     y_data = circ.get('y')
     y_data = np.array(y_data)
     hf.close()
-    gsm(x_data, y_data, 'Circle')
+    gsm(x_data, y_data, 'Circle', is_dmp_on=True)
     
     
 if __name__ == '__main__':
