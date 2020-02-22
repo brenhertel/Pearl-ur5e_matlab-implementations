@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def gradient_map(A, name='', fpath='', min_in=0, max_in=1):
+    fig = plt.figure()
     im = plt.imshow(A, cmap='gray', vmin=min_in, vmax=max_in)
     plt.xticks([])
     plt.yticks([])
@@ -11,6 +12,7 @@ def gradient_map(A, name='', fpath='', min_in=0, max_in=1):
     #plt.show()
 
 def rgb_gradient(A, B, C, name='', fpath='', min_in=0, max_in=1):
+    fig = plt.figure()
     img_stacked = np.dstack((A, B, C))
     im = plt.imshow(img_stacked, vmin=min_in, vmax=max_in)
     plt.xticks([])
@@ -20,6 +22,7 @@ def rgb_gradient(A, B, C, name='', fpath='', min_in=0, max_in=1):
     #plt.show()
     
 def strongest_gradient(A, B, C, name='', fpath='', min_in=0, max_in=1):
+    fig = plt.figure()
     img_stacked = np.dstack((A, B, C))
     for i in range (np.shape(img_stacked)[0]):
         for j in range (np.shape(img_stacked)[1]):
