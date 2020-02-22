@@ -19,7 +19,7 @@ from scipy.interpolate import interp2d
 
 #in-file testing
 def main():
-    is_dmp_on = False
+    is_dmp_on = True
     num_algs = 2
     ## Get Trajectory ##
     print('Getting Trajectory')
