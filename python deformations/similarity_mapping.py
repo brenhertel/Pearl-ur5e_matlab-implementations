@@ -65,6 +65,7 @@ def main():
     org_traj[:, 1] = np.transpose(y_data)
     for i in range (grid_size):
         for j in range (grid_size):
+            print('Starting')
             starts_x[i][j] = grid_deforms_x[i][j].lte[0]
             starts_y[i][j] = grid_deforms_y[i][j].lte[0]
             #lte hd/fd
@@ -147,12 +148,12 @@ def main():
     if is_dmp_on:
         gradient_plotting.gradient_map(fd_dmp, 'DMP Frechet Distance')
         gradient_plotting.gradient_map(hd_dmp, 'DMP Haussdorf Distance')
-        rgb_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Compared Reproductions'):
-        rgb_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Compared Reproductions'):
+        rgb_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Compared Reproductions')
+        rgb_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Compared Reproductions')
         strongest_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Best Reproductions')
         strongest_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Best Reproductions')
-    rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Compared Reproductions'):
-    rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Compared Reproductions'):
+    rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Compared Reproductions')
+    rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Compared Reproductions')
     strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Best Reproductions')
     strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Best Reproductions')
     #set up grid for 3d surfaces
