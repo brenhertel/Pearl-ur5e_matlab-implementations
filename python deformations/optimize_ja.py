@@ -21,7 +21,9 @@ def optimize_lambda_x(x):
     fd = similaritymeasures.frechet_dist(new_traj, glob_traj)
     return fd
 
-def opt_lambda_traj_1d(in_data, min_lambda=0.0, max_lambda=250.0):
+def opt_lambda_traj_1d(in_data, min_lambda=0.0, max_lambda=-1.0):
+    if (max_lambda < 0.0):
+        max_lambda = np.size(in_data) / 10.0;
     in_data = downsample_1d(in_data)
     global glob_traj
     glob_traj = in_data
@@ -44,7 +46,7 @@ def main1():
     x_traj = x_data
     y_traj = y_data
     min_lambda = 0.0;
-    max_lambda = 250.0;
+    max_lambda = 200.0;
     result_x = optimize.fminbound(optimize_lambda_x, min_lambda, max_lambda, disp=3)
     result_y = optimize.fminbound(optimize_lambda_y, min_lambda, max_lambda, disp=3)
     new_traj_x = ja.perform_ja_improved(x_data, lmbda=result_x)
@@ -70,10 +72,11 @@ def main2():
     hf.close()
     result_x = opt_lambda_traj_1d(x_data)
     result_y = opt_lambda_traj_1d(y_data)
-    new_traj_x = ja.perform_ja_improved(x_data, lmbda=result_x)
-    new_traj_y = ja.perform_ja_improved(y_data, lmbda=result_y)
-    def_traj_x = ja.perform_ja_improved(x_data)
-    def_traj_y = ja.perform_ja_improved(y_data)
+    #result = max(result_x, result_y)
+    new_traj_x = ja.perform_ja_improved(x_data, initial=(-0.5 * x_data[0]), lmbda=result_x)
+    new_traj_y = ja.perform_ja_improved(y_data, initial=(2.5 * y_data[0]), lmbda=result_y)
+    def_traj_x = ja.perform_ja_improved(x_data, initial=(-0.5 * x_data[0]))
+    def_traj_y = ja.perform_ja_improved(y_data, initial=(2.5 * y_data[0]))
     plt.plot(x_data, y_data, 'b')
     plt.plot(new_traj_x, new_traj_y, 'r')
     plt.plot(def_traj_x, def_traj_y, 'g')

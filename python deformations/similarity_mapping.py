@@ -14,13 +14,12 @@ from matplotlib.colors import LogNorm
 from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp2d
-
+import gradient_plotting
 
 
 #in-file testing
 def main():
     is_dmp_on = True
-    num_algs = 2
     ## Get Trajectory ##
     print('Getting Trajectory')
     filename = '../h5 files/hello2.h5'
@@ -121,16 +120,16 @@ def main():
             ax.plot(grid_deforms_x[i][j].lte, grid_deforms_y[i][j].lte, 'g')
             ax.plot(grid_deforms_x[i][j].ja, grid_deforms_y[i][j].ja, 'r')
             if is_dmp_on:
-                ax.plot(grid_deforms_x[i][j].ja, grid_deforms_y[i][j].ja, 'm')
-            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].traj)
+                ax.plot(grid_deforms_x[i][j].dmp, grid_deforms_y[i][j].dmp, 'm')
+            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].traj)
             fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].traj)
-            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].lte)
+            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].lte)
             fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].lte)
-            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_y[i][j].ja)
+            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].ja)
             fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].ja)
             if is_dmp_on:
-                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms[i][j].x.dmp)
-                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms[i][j].y.dmp)
+                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].dmp)
+                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].dmp)
     plt.show()
     #store hd/fd data in h5
     fp.create_dataset(dset_name + '/lte/fd', data=fd_lte)
@@ -140,6 +139,23 @@ def main():
     if is_dmp_on:
         fp.create_dataset(dset_name + '/dmp/fd', data=fd_dmp)
         fp.create_dataset(dset_name + '/dmp/hd', data=hd_dmp)
+    #gradient maps
+    gradient_plotting.gradient_map(fd_lte, 'LTE Frechet Distance')
+    gradient_plotting.gradient_map(hd_lte, 'LTE Haussdorf Distance')
+    gradient_plotting.gradient_map(fd_ja, 'JA Frechet Distance')
+    gradient_plotting.gradient_map(hd_ja, 'JA Haussdorf Distance')
+    if is_dmp_on:
+        gradient_plotting.gradient_map(fd_dmp, 'DMP Frechet Distance')
+        gradient_plotting.gradient_map(hd_dmp, 'DMP Haussdorf Distance')
+        rgb_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Compared Reproductions'):
+        rgb_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Compared Reproductions'):
+        strongest_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Best Reproductions')
+        strongest_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Best Reproductions')
+    rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Compared Reproductions'):
+    rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Compared Reproductions'):
+    strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Best Reproductions')
+    strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Best Reproductions')
+    #set up grid for 3d surfaces
     x_vals = starts_x[0, :]
     y_vals = starts_y[:, 0]
     xnew = np.linspace(x_vals[0], x_vals[grid_size - 1], 1000)
