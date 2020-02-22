@@ -29,7 +29,7 @@ def get_start_end_dist(x, y):
     return get_euclidian_dist(x[0], y[0], x[len(x) - 1], y[len(y) - 1])
     
 #in-file testing
-def gsm(x_data, y_data, name, is_dmp_on=False, grid_size=5, grid_x_dist=-1.0, grid_y_dist=-1.0):
+def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0, grid_y_dist=-1.0):
     ## Optimize JA for trajectory ##
     print('Optimizing JA')
     lambda_x = optimize_ja.opt_lambda_traj_1d(x_data)
@@ -152,14 +152,14 @@ def gsm(x_data, y_data, name, is_dmp_on=False, grid_size=5, grid_x_dist=-1.0, gr
     if is_dmp_on:
         gradient_plotting.gradient_map(fd_dmp, name + ' DMP Frechet Distance')
         gradient_plotting.gradient_map(hd_dmp, name + ' DMP Haussdorf Distance')
-        rgb_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Compared Reproductions'))
-        rgb_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Compared Reproductions'))
-        strongest_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Best Reproductions'))
-        strongest_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Best Reproductions'))
-    rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Compared Reproductions'))
-    rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Compared Reproductions'))
-    strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Best Reproductions'))
-    strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Best Reproductions'))
+        gradient_plotting.rgb_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Compared Reproductions'))
+        gradient_plotting.rgb_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Compared Reproductions'))
+        gradient_plotting.strongest_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Best Reproductions'))
+        gradient_plotting.strongest_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Best Reproductions'))
+    gradient_plotting.rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Compared Reproductions'))
+    gradient_plotting.rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Compared Reproductions'))
+    gradient_plotting.strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Best Reproductions'))
+    gradient_plotting.strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Best Reproductions'))
     #set up grid for 3d surfaces
     x_vals = starts_x[0, :]
     y_vals = starts_y[:, 0]

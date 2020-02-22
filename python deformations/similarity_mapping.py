@@ -148,14 +148,14 @@ def main():
     if is_dmp_on:
         gradient_plotting.gradient_map(fd_dmp, 'DMP Frechet Distance')
         gradient_plotting.gradient_map(hd_dmp, 'DMP Haussdorf Distance')
-        rgb_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Compared Reproductions')
-        rgb_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Compared Reproductions')
-        strongest_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Best Reproductions')
-        strongest_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Best Reproductions')
-    rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Compared Reproductions')
-    rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Compared Reproductions')
-    strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Best Reproductions')
-    strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Best Reproductions')
+        gradient_plotting.rgb_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Compared Reproductions')
+        gradient_plotting.rgb_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Compared Reproductions')
+        gradient_plotting.strongest_gradient(fd_ja, fd_lte, fd_dmp, name='Frechet Distance Best Reproductions')
+        gradient_plotting.strongest_gradient(hd_ja, hd_lte, hd_dmp, name='Haussdorf Distance Best Reproductions')
+    gradient_plotting.rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Compared Reproductions')
+    gradient_plotting.rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Compared Reproductions')
+    gradient_plotting.strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name='Frechet Distance Best Reproductions')
+    gradient_plotting.strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name='Haussdorf Distance Best Reproductions')
     #set up grid for 3d surfaces
     x_vals = starts_x[0, :]
     y_vals = starts_y[:, 0]
