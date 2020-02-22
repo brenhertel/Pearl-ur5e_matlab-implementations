@@ -230,7 +230,7 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
     fp.close()
 
 def main():
-    print('Getting Trajectory')
+    print('Starting')
     #filename = '../h5 files/hello2.h5'
     #hf = h5py.File(filename, 'r')
     #hello = hf.get('hello')
@@ -239,15 +239,27 @@ def main():
     #y_data = hello.get('resampled_y')
     #y_data = np.array(y_data)
     #hf.close()
-    filename = '../h5 files/Circle_drawing_demo.h5'
-    hf = h5py.File(filename, 'r')
-    circ = hf.get('Circle')
-    x_data = circ.get('x')
-    x_data = np.array(x_data)
-    y_data = circ.get('y')
-    y_data = np.array(y_data)
-    hf.close()
-    gsm(x_data, y_data, 'Circle', is_dmp_on=False)
+    shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    for i in range (len(shape_names)):
+            print(shape_names[i])
+            filename = '../h5 files/' + shape_names[i] +'_drawing_demo.h5'
+            hf = h5py.File(filename, 'r')
+            demo = hf.get(shape_names[i])
+            x_data = demo.get('x')
+            x_data = np.array(x_data)
+            y_data = demo.get('y')
+            y_data = np.array(y_data)
+            hf.close()
+            gsm(x_data, y_data, shape_names[i] + '_dmp_on', is_dmp_on=True)
+    #filename = '../h5 files/Circle_drawing_demo.h5'
+    #hf = h5py.File(filename, 'r')
+    #circ = hf.get('Circle')
+    #x_data = circ.get('x')
+    #x_data = np.array(x_data)
+    #y_data = circ.get('y')
+    #y_data = np.array(y_data)
+    #hf.close()
+    #gsm(x_data, y_data, 'Circle', is_dmp_on=False)
     
     
 if __name__ == '__main__':
