@@ -1,12 +1,18 @@
 %%% store drawing in .h5 file %%%
 %% preprocess trajs %%
-x_traj = xx * 100;
-y_traj = yy * 100;
+name = 'Straight_Ribbon';
+x_traj = x_new * 100;
+y_traj = y_new * 100;
 num_points = 1000;
 x_traj = preprocess_traj(x_traj, num_points);
 y_traj = preprocess_traj(y_traj, num_points);
+
+%% plot %%
+plot(x_traj, y_traj)
+title(name)
+pause
+
 %% store in file %%
-name = 'Circle';
 filename = [name '_drawing_demo.h5'];
 h5create(filename,['/' name '/x'],[1 num_points])
 h5write(filename,['/' name '/x'], x_traj)
