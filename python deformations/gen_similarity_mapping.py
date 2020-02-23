@@ -31,6 +31,13 @@ def get_start_end_dist(x, y):
     
 #in-file testing
 def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0, grid_y_dist=-1.0):
+    plt_fpath = '../pictures/lte_writing/' + name + '/' + str(grid_size) + '_grid/'
+    try:
+        os.makedirs(plt_fpath)
+    except OSError:
+        print ("Creation of the directory %s failed" % plt_fpath)
+    else:
+        print ("Successfully created the directory %s" % plt_fpath)
     ## Optimize JA for trajectory ##
     print('Optimizing JA')
     lambda_x = optimize_ja.opt_lambda_traj_1d(x_data)
@@ -138,8 +145,6 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
                 fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].dmp)
     plt.xticks([])
     plt.yticks([])
-    plt_fpath = '../pictures/lte_writing/' + name + '/' + str(grid_size) + '_grid/'
-    os.makedirs(plt_fpath)
     plt.savefig(plt_fpath + 'deforms.png')
     #store hd/fd data in h5
     fp.create_dataset(dset_name + '/lte/fd', data=fd_lte)
@@ -150,13 +155,13 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
         fp.create_dataset(dset_name + '/dmp/fd', data=fd_dmp)
         fp.create_dataset(dset_name + '/dmp/hd', data=hd_dmp)
     #gradient maps
-    gradient_plotting.gradient_map(fd_lte, name + ' LTE Frechet Distance', fpath=plt_fpath)
-    gradient_plotting.gradient_map(hd_lte, name + ' LTE Haussdorf Distance', fpath=plt_fpath)
-    gradient_plotting.gradient_map(fd_ja, name + ' JA Frechet Distance', fpath=plt_fpath)
-    gradient_plotting.gradient_map(hd_ja, name + ' JA Haussdorf Distance', fpath=plt_fpath)
+    gradient_plotting.gradient_map(fd_lte, name + ' LTE Frechet Distance Gradient', fpath=plt_fpath)
+    gradient_plotting.gradient_map(hd_lte, name + ' LTE Haussdorf Distance Gradient', fpath=plt_fpath)
+    gradient_plotting.gradient_map(fd_ja, name + ' JA Frechet Distance Gradient', fpath=plt_fpath)
+    gradient_plotting.gradient_map(hd_ja, name + ' JA Haussdorf Distance Gradient', fpath=plt_fpath)
     if is_dmp_on:
-        gradient_plotting.gradient_map(fd_dmp, name + ' DMP Frechet Distance', fpath=plt_fpath)
-        gradient_plotting.gradient_map(hd_dmp, name + ' DMP Haussdorf Distance', fpath=plt_fpath)
+        gradient_plotting.gradient_map(fd_dmp, name + ' DMP Frechet Distance Gradient', fpath=plt_fpath)
+        gradient_plotting.gradient_map(hd_dmp, name + ' DMP Haussdorf Distance Gradient', fpath=plt_fpath)
         gradient_plotting.rgb_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Compared Reproductions'), fpath=plt_fpath)
         gradient_plotting.rgb_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Compared Reproductions'), fpath=plt_fpath)
         gradient_plotting.strongest_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Best Reproductions'), fpath=plt_fpath)
@@ -197,38 +202,38 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
     ax.plot_surface(X, Y, fd_lte_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' LTE Frechet Distance', fontsize=f_size)
     #plt.show()
-    plt.savefig(plt_fpath + name + ' LTE Frechet Distance.png')
+    plt.savefig(plt_fpath + name + ' LTE Frechet Distance Surface.png')
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, hd_lte_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' LTE Haussdorf Distance', fontsize=f_size)
     #plt.show()
-    plt.savefig(plt_fpath + name + ' LTE Frechet Distance.png')
+    plt.savefig(plt_fpath + name + ' LTE Haussdorf Distance Surface.png')
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, fd_ja_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' JA Frechet Distance', fontsize=f_size)
     #plt.show()
-    plt.savefig(plt_fpath + name + ' JA Frechet Distance.png')
+    plt.savefig(plt_fpath + name + ' JA Frechet Distance Surface.png')
     fig = plt.figure()
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, hd_ja_plot,cmap='viridis', edgecolor='none')
     ax.set_title(name + ' JA Haussdorf Distance', fontsize=f_size)
     #plt.show()
-    plt.savefig(plt_fpath + name + ' JA Haussdorf Distance.png')
+    plt.savefig(plt_fpath + name + ' JA Haussdorf Distance Surface.png')
     if is_dmp_on:
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         ax.plot_surface(X, Y, fd_dmp_plot,cmap='viridis', edgecolor='none')
         ax.set_title(name + ' DMP Frechet Distance', fontsize=f_size)
         #plt.show()
-        plt.savefig(plt_fpath + name + ' DMP Frechet Distance.png')
+        plt.savefig(plt_fpath + name + ' DMP Frechet Distance Surface.png')
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         ax.plot_surface(X, Y, hd_dmp_plot,cmap='viridis', edgecolor='none')
         ax.set_title(name + ' DMP Haussdorf Distance', fontsize=f_size)
         #plt.show()
-        plt.savefig(plt_fpath + name + ' DMP Haussdorf Distance.png')
+        plt.savefig(plt_fpath + name + ' DMP Haussdorf Distance Surface.png')
     fp.close()
 
 def main():
@@ -252,6 +257,7 @@ def main():
             y_data = demo.get('y')
             y_data = np.array(y_data)
             hf.close()
+            gsm(x_data, y_data, shape_names[i], is_dmp_on=False)
             gsm(x_data, y_data, shape_names[i] + '_dmp_on', is_dmp_on=True)
     #filename = '../h5 files/Circle_drawing_demo.h5'
     #hf = h5py.File(filename, 'r')
