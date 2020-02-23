@@ -235,6 +235,7 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
         #plt.show()
         plt.savefig(plt_fpath + name + ' DMP Haussdorf Distance Surface.png')
     fp.close()
+    plt.close('all')
 
 def main():
     print('Starting')
@@ -257,7 +258,7 @@ def main():
             y_data = demo.get('y')
             y_data = np.array(y_data)
             hf.close()
-            gsm(x_data, y_data, shape_names[i], is_dmp_on=False)
+            #gsm(x_data, y_data, shape_names[i], is_dmp_on=False)
             gsm(x_data, y_data, shape_names[i] + '_dmp_on', is_dmp_on=True)
     #filename = '../h5 files/Circle_drawing_demo.h5'
     #hf = h5py.File(filename, 'r')
