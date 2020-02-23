@@ -15,6 +15,7 @@ from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp2d
 import gradient_plotting
+import os
 
 def get_euclidian_dist(x1, y1, x2, y2):
     return ((x2-x1)**2 + (y2-y1)**2)**0.5
@@ -138,6 +139,7 @@ def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0,
     plt.xticks([])
     plt.yticks([])
     plt_fpath = '../pictures/lte_writing/' + name + '/' + str(grid_size) + '_grid/'
+    os.makedirs(plt_fpath)
     plt.savefig(plt_fpath + 'deforms.png')
     #store hd/fd data in h5
     fp.create_dataset(dset_name + '/lte/fd', data=fd_lte)
