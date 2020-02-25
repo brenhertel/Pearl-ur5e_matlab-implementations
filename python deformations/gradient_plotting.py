@@ -11,6 +11,15 @@ def gradient_map(A, name='', fpath='', min_in=0, max_in=1):
     plt.savefig(fpath + name + '.png')
     #plt.show()
 
+def gradient_map_show(A, name='', min_in=0, max_in=1):
+    fig = plt.figure()
+    im = plt.imshow(A, cmap='gray', vmin=min_in, vmax=max_in)
+    plt.xticks([])
+    plt.yticks([])
+    plt.colorbar(im)
+    plt.title(name, fontsize=32)
+    plt.show()
+
 def rgb_gradient(A, B, C, name='', fpath='', min_in=0, max_in=1):
     fig = plt.figure()
     img_stacked = np.dstack((A, B, C))

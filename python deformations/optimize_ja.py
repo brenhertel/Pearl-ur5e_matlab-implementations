@@ -12,7 +12,7 @@ def downsample_1d(traj, n=100):
     out = np.zeros((n))
     for i in range (n):
         out[i] = traj[int(npts[i])]
-    print(out)
+    #print(out)
     return out
 
 def optimize_lambda_x(x):

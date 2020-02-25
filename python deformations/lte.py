@@ -95,6 +95,23 @@ def generate_lte_fixed_points(indeces, positions):
     point_arr.append(add_point)
   return point_arr
 
+def perform_lte_improved(traj, initial=[], end=[]):
+  #set up endpoints if none specified
+  if not initial:
+    initial = traj[0]
+  if not end:
+    end = traj[max(np.shape(traj)) - 1]
+  #transpose if necessary
+  if len(np.shape(traj)) > 1:
+    if np.shape(traj)[0] > np.shape(traj)[1]:
+      traj = np.transpose(traj)
+  traj = np.reshape(traj, (1, max(np.shape(traj))))
+  ## LTE ##
+  indeces = [1, max(np.shape(traj)) - 1]
+  lte_fixed_points = generate_lte_fixed_points(indeces, [initial, end])
+  lte_traj = perform_lte(traj, lte_fixed_points)
+  return lte_traj
+
 #in-file testing
 def main():
   hLTE = LTE(np.ones((1, 5)))
