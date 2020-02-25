@@ -196,10 +196,11 @@ class GSM(object):
                         if plot == True:
                             print('Plotting a grid of 3D plots is too hard!')
     plt.show()
+    plt.close('all')
     
   def calc_metrics(self, d_sample=True, n_dsample=100):
     for n in range (self.n_metrics):
-        A = np.zeros((self.grid_size, self.grid_size))
+        #A = np.zeros((self.grid_size, self.grid_size))
         metric_max = None
         metric_min = None
         for m in range (self.n_algs):
@@ -273,7 +274,7 @@ class GSM(object):
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         self.grid_similarities[i][j][n][m].val = my_map(self.grid_similarities[i][j][n][m].val, metric_min, metric_max, 1, 0)
-                        A[i][j] = self.grid_similarities[i][j][n][m].val
+                        #A[i][j] = self.grid_similarities[i][j][n][m].val
             if self.n_dims == 3:
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
@@ -303,13 +304,13 @@ class GSM(object):
     for m in range (self.n_algs):
         for n in range (self.n_metrics):
             if self.n_dims == 1:
-                A = np.array((self.grid_size))
+                A = np.zeros((self.grid_size))
                 for i in range (self.grid_size):
                     fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ')/x', data=self.grid_deforms_x[i][m].traj)
                     A[i] = self.grid_similarities[i][n][m].val
                 fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
             if self.n_dims == 2:
-                A = np.array((self.grid_size, self.grid_size))
+                A = np.zeros((self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ')/x', data=self.grid_deforms_x[i][j][m].traj)
@@ -317,7 +318,7 @@ class GSM(object):
                         A[i][j] = self.grid_similarities[i][j][n][m].val
                 fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
             if self.n_dims == 3:
-                A = np.array((self.grid_size, self.grid_size, self.grid_size))
+                A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         for k in range (self.grid_size):
@@ -332,24 +333,24 @@ class GSM(object):
     for m in range (self.n_algs):
         for n in range (self.n_metrics):
             if self.n_dims == 1:
-                A = np.array((self.grid_size))
+                A = np.zeros((self.grid_size))
                 for i in range (self.grid_size):
                     A[i] = self.grid_similarities[i][n][m].val
-                if (mode == save):
+                if (mode == 'save'):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
                     gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')                                      
             if self.n_dims == 2:
-                A = np.array((self.grid_size, self.grid_size))
+                A = np.zeros((self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         A[i][j] = self.grid_similarities[i][j][n][m].val
-                if (mode == save):
+                if (mode == 'save'):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
                     gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')   
             if self.n_dims == 3:
-                A = np.array((self.grid_size, self.grid_size, self.grid_size))
+                A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         for k in range (self.grid_size):
@@ -357,8 +358,95 @@ class GSM(object):
                 if (mode == save):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
-                    gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')   
-      
+                    gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient') 
+    plt.close('all')
+
+  def plot_strongest_gradients(self, mode='save', filepath=''):
+    for n in range (self.n_metrics):
+        if self.n_dims == 1:
+            A = np.zeros((self.grid_size))
+            for i in range (self.grid_size):
+                max_n = None
+                for m in range (self.n_algs):
+                    if (max_n == None or max_n < self.grid_similarities[i][n][m].val):
+                        max_n = m
+                A[i] = max_n
+            B = self.convert_num_to_rgb(A)
+            im = plt.imshow(B, vmin=0, vmax=1)
+            plt.xticks([])
+            plt.title(self.metric_names[n] + 'Comparison', fontsize=32)
+            if (mode == 'save'):
+                plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
+            else:
+                plt.show()                                     
+        if self.n_dims == 2:
+            A = np.zeros((self.grid_size, self.grid_size))
+            for i in range (self.grid_size):
+                for j in range (self.grid_size):
+                    max_n = None
+                    for m in range (self.n_algs):
+                        if (max_n == None or max_n < self.grid_similarities[i][j][n][m].val):
+                            max_n = m
+                    A[i][j] = max_n
+            B = self.convert_num_to_rgb(A)
+            im = plt.imshow(B, vmin=0, vmax=1)
+            plt.xticks([])
+            plt.yticks([])
+            plt.title(self.metric_names[n] + 'Comparison', fontsize=32)
+            if (mode == 'save'):
+                plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
+            else:
+                plt.show()           
+        if self.n_dims == 3:
+            print('Gradient in 3D too difficult to show')
+        
+  def convert_num_to_rgb(self, A):
+    #colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    if self.n_dims == 1:
+        B = np.zeros((self.grid_size, 3))
+        for i in range (self.grid_size):
+            if A[i] == 0:
+                B[i][0] = 255
+            elif A[i] == 1:
+                B[i][1] = 255
+            elif A[i] == 2:
+                B[i][2] = 255
+            elif A[i] == 3:
+                B[i][0] = 255
+                B[i][1] = 255
+            elif A[i] == 4:
+                B[i][0] = 255
+                B[i][2] = 255
+            elif A[i] == 5:
+                B[i][1] = 255
+                B[i][2] = 255
+            else:
+                print('Too many algorithms to represent color')
+    if self.n_dims == 2:
+        B = np.zeros((self.grid_size, self.grid_size, 3))
+        for i in range (self.grid_size):
+            for j in range (self.grid_size):
+                if A[i][j] == 0:
+                    B[i][j][0] = 255
+                elif A[i][j] == 1:
+                    B[i][j][1] = 255
+                elif A[i][j] == 2:
+                    B[i][j][2] = 255
+                elif A[i][j] == 3:
+                    B[i][j][0] = 255
+                    B[i][j][1] = 255
+                elif A[i][j] == 4:
+                    B[i][j][0] = 255
+                    B[i][j][2] = 255
+                elif A[i][j] == 5:
+                    B[i][j][1] = 255
+                    B[i][j][2] = 255
+                else:
+                    print('Too many algorithms to represent color')
+    if self.n_dims == 3:
+        print('Too difficult to represent 3D gradient')
+    return B
+  
   def plot_surfaces(self, mode='save', filepath=''):
     return
         
@@ -655,13 +743,15 @@ def main():
     my_gsm.add_traj_dimension(y_data, 'y')
     #print(x_data)
     #print(y_data)
+    my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
     my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
     my_gsm.add_sim_metric(my_fd2, name='Haussdorf', is_disssim=True)
     #my_gsm.add_traj_dimension(x_data, 'z')
-    my_gsm.create_grid(3, [10, 10])
+    my_gsm.create_grid(10, [20, 20])
     my_gsm.deform_traj(plot=False)
     my_gsm.calc_metrics(d_sample=True)
     my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
+    my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
     
     
 if __name__ == '__main__':
