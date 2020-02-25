@@ -179,6 +179,7 @@ class GSM(object):
                     print('i: %d, j: %d, n: %d' % (i, j, n))
                     self.grid_deforms_x[i][j][n].traj = self.algs[n](self.org_x, self.grid[i][j].x)
                     self.grid_deforms_y[i][j][n].traj = self.algs[n](self.org_y, self.grid[i][j].y)
+                    #print('start: (%f, %f)' % (self.grid_deforms_x[i][j][n].traj[0], self.grid_deforms_y[i][j][n].traj[0]))
                     if plot == True:
                         ax = plt.subplot2grid((self.grid_size, self.grid_size), (i, j))
                         ax.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n])
@@ -213,7 +214,17 @@ class GSM(object):
                 if self.n_dims == 2:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
+                            #print('org_x')
+                            #print(self.org_x)
+                            #print('deform_x')
+                            #print(self.grid_deforms_x[i][j][m].traj)
+                            #print('org_y')
+                            #print(self.org_y)
+                            #print('deform_y')
+                            #print(self.grid_deforms_y[i][j][m].traj)
+                            #print('i: %d, j: %d' % (i, j))
                             self.grid_similarities[i][j][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][m].traj, n_dsample))
+                            #print(self.grid_similarities[i][j][n][m].val)
                             if (metric_max == None or self.grid_similarities[i][j][n][m].val > metric_max):
                                 metric_max = self.grid_similarities[i][j][n][m].val
                             if (metric_min == None or self.grid_similarities[i][j][n][m].val < metric_min):
@@ -239,6 +250,7 @@ class GSM(object):
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             self.grid_similarities[i][j][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][j][m].traj, self.org_y, self.grid_deforms_y[i][j][m].traj)
+                            print(self.grid_similarities[i][j][n][m].val)
                             if (metric_max == None or self.grid_similarities[i][j][n][m].val > metric_max):
                                 metric_max = self.grid_similarities[i][j][n][m].val
                             if (metric_min == None or self.grid_similarities[i][j][n][m].val < metric_min):
@@ -282,7 +294,73 @@ class GSM(object):
                     for j in range (self.grid_size):
                         for k in range (self.grid_size):
                             self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
-    gradient_plotting.gradient_map_show(A, 'test', 0, 1)
+    #print(A)
+    #gradient_plotting.gradient_map_show(A, 'test', 0, 1)
+    
+  def save_results(self, filename='unspecified.h5'):
+    fp = h5py.File(filename, 'w')
+    dset_name = 'GSM'
+    for m in range (self.n_algs):
+        for n in range (self.n_metrics):
+            if self.n_dims == 1:
+                A = np.array((self.grid_size))
+                for i in range (self.grid_size):
+                    fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ')/x', data=self.grid_deforms_x[i][m].traj)
+                    A[i] = self.grid_similarities[i][n][m].val
+                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
+            if self.n_dims == 2:
+                A = np.array((self.grid_size, self.grid_size))
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ')/x', data=self.grid_deforms_x[i][j][m].traj)
+                        fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ')/y', data=self.grid_deforms_y[i][j][m].traj)
+                        A[i][j] = self.grid_similarities[i][j][n][m].val
+                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
+            if self.n_dims == 3:
+                A = np.array((self.grid_size, self.grid_size, self.grid_size))
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        for k in range (self.grid_size):
+                            fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/x', data=self.grid_deforms_x[i][j][k][m].traj)
+                            fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/y', data=self.grid_deforms_y[i][j][k][m].traj)
+                            fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/z', data=self.grid_deforms_z[i][j][k][m].traj)
+                            A[i][j][k] = self.grid_similarities[i][j][k][n][m].val
+                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
+    fp.close()
+  
+  def plot_gradients(self, mode='save', filepath=''):
+    for m in range (self.n_algs):
+        for n in range (self.n_metrics):
+            if self.n_dims == 1:
+                A = np.array((self.grid_size))
+                for i in range (self.grid_size):
+                    A[i] = self.grid_similarities[i][n][m].val
+                if (mode == save):
+                    gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
+                else:
+                    gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')                                      
+            if self.n_dims == 2:
+                A = np.array((self.grid_size, self.grid_size))
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        A[i][j] = self.grid_similarities[i][j][n][m].val
+                if (mode == save):
+                    gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
+                else:
+                    gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')   
+            if self.n_dims == 3:
+                A = np.array((self.grid_size, self.grid_size, self.grid_size))
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        for k in range (self.grid_size):
+                            A[i][j][k] = self.grid_similarities[i][j][k][n][m].val 
+                if (mode == save):
+                    gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
+                else:
+                    gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')   
+      
+  def plot_surfaces(self, mode='save', filepath=''):
+    return
         
         
 
@@ -534,7 +612,7 @@ def my_hd2(x1, x2, y1, y2):
     comp_traj = np.zeros((np.shape(org_traj)))
     org_traj[:, 0] = np.transpose(x1)
     org_traj[:, 1] = np.transpose(y1)
-    comp_traj[:, 0] = np.transpose(y1)
+    comp_traj[:, 0] = np.transpose(x2)
     comp_traj[:, 1] = np.transpose(y2)
     return max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
     
@@ -543,11 +621,27 @@ def my_fd2(x1, x2, y1, y2):
     comp_traj = np.zeros((np.shape(org_traj)))
     org_traj[:, 0] = np.transpose(x1)
     org_traj[:, 1] = np.transpose(y1)
-    comp_traj[:, 0] = np.transpose(y1)
+    comp_traj[:, 0] = np.transpose(x2)
     comp_traj[:, 1] = np.transpose(y2)
+    #print('org_x0')
+    #print(org_traj[0, 0])
+    #print('org_y0')
+    #print(org_traj[0, 1])
+    #print('comp_x0')
+    #print(comp_traj[0, 0])
+    #print('comp_y0')
+    #print(comp_traj[0, 1])
+    #print('start: (%f, %f)' % (comp_traj[0][0], comp_traj[0][1]))
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
 def main():
+    plt_fpath = '../pictures/lte_writing/test/'
+    try:
+        os.makedirs(plt_fpath)
+    except OSError:
+        print ("Creation of the directory %s failed" % plt_fpath)
+    else:
+        print ("Successfully created the directory %s" % plt_fpath)
     filename = '../h5 files/' + 'Worm' + '_drawing_demo.h5'
     hf = h5py.File(filename, 'r')
     demo = hf.get('Worm')
@@ -559,12 +653,15 @@ def main():
     my_gsm = GSM()
     my_gsm.add_traj_dimension(x_data, 'x')
     my_gsm.add_traj_dimension(y_data, 'y')
+    #print(x_data)
+    #print(y_data)
     my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
-    my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_disssim=True)
+    my_gsm.add_sim_metric(my_fd2, name='Haussdorf', is_disssim=True)
     #my_gsm.add_traj_dimension(x_data, 'z')
-    my_gsm.create_grid(5, [10, 10])
-    my_gsm.deform_traj(plot=True)
-    my_gsm.calc_metrics()
+    my_gsm.create_grid(3, [10, 10])
+    my_gsm.deform_traj(plot=False)
+    my_gsm.calc_metrics(d_sample=True)
+    my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
     
     
 if __name__ == '__main__':
