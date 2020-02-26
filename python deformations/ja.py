@@ -148,11 +148,13 @@ def perform_ja_improved(traj, initial=[], end=[], lmbda=-1.0):
   if len(np.shape(traj)) > 1:
     if np.shape(traj)[0] > np.shape(traj)[1]:
       traj = np.transpose(traj)
-  traj = np.reshape(traj, (1, max(np.shape(traj))))
+  ntraj = np.reshape(traj, (1, max(np.shape(traj))))
   ## JA ##
   ja_fixed_points = generate_ja_fixed_points(np.array([[initial], [end]]))
-  ja_traj = perform_ja(traj, ja_fixed_points, lmbda)
-  return ja_traj
+  ja_traj = perform_ja(ntraj, ja_fixed_points, lmbda)
+  ja_traj = np.reshape(ja_traj, np.shape(traj))
+  #print(ja_traj[0])
+  return ja_traj[0]
 
 #in-file testing
 def main():

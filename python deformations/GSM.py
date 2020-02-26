@@ -16,6 +16,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp2d
 import gradient_plotting
 import os
+from scipy.interpolate import RegularGridInterpolator
 
 class point(object):
   def __init__(self, given_x=None, given_y=None, given_z=None):
@@ -68,6 +69,7 @@ class GSM(object):
     self.metrics = []
     self.metric_names = []
     self.is_dissims = []
+    self.f_size = 32
     
   def add_traj_dimension(self, traj, dim=''):
     if (self.traj_len != 0 and len(traj) != self.traj_len):
@@ -110,6 +112,7 @@ class GSM(object):
         grid_max_x = center.x + (dists[0] / 2)
         grid_min_x = center.x - (dists[0] / 2)
         self.x_vals = np.linspace(grid_min_x, grid_max_x, self.grid_size)
+        #print(np.reshape(self.x_vals, (self.grid_size)))
     if (self.n_dims >= 2):
         center = point(self.org_x[0], self.org_y[0])
         grid_max_y = center.y + (dists[1] / 2)
@@ -122,6 +125,7 @@ class GSM(object):
         self.z_vals = np.linspace(grid_min_z, grid_max_z, self.grid_size)
     if (self.n_dims == 1):
         self.grid = [point() for i in range (self.grid_size)]
+        #self.grid_x = np.meshgrid(x_vals)
         self.grid_deforms_x = [[traj() for n in range (self.n_algs)] for i in range (self.grid_size)]
         self.grid_similarities = [[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)]
         for i in range (self.grid_size):
@@ -131,6 +135,7 @@ class GSM(object):
                 print('X: %f' % (self.grid[i].x))
     if (self.n_dims == 2):
         self.grid = [[point() for i in range (self.grid_size)] for j in range (self.grid_size)]
+        #self.grid_x, self.grid_y = np.meshgrid(x_vals, y_vals)
         self.grid_deforms_x = [[[traj() for n in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_deforms_y = [[[traj() for n in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities = [[[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)] for j in range (self.grid_size)]
@@ -144,6 +149,7 @@ class GSM(object):
                     print('X: %f, Y: %f' % (self.grid[i][j].x, self.grid[i][j].y))
     if (self.n_dims == 3):
         self.grid = [[[point() for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
+        #self.grid_x, self.grid_y, self.grid_z = np.meshgrid(x_vals, y_vals, z_vals)
         self.grid_deforms_x = [[[[traj() for n in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
         self.grid_deforms_y = [[[[traj() for n in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
         self.grid_deforms_z = [[[[traj() for n in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)] 
@@ -186,6 +192,7 @@ class GSM(object):
                         ax.plot(self.org_x, self.org_y, 'k')
                         plt.xticks([])
                         plt.yticks([])
+            plt.show()
         if self.n_dims == 3:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
@@ -265,36 +272,38 @@ class GSM(object):
                                     metric_max = self.grid_similarities[i][j][k][n][m].val
                                 if (metric_min == None or self.grid_similarities[i][j][k][n][m].val < metric_min):
                                     metric_min = self.grid_similarities[i][j][k][n][m].val
-    if (self.is_dissims[n] == True):
-        for m in range (self.n_algs):
-            if self.n_dims == 1:
-                for i in range (self.grid_size):
-                    self.grid_similarities[i][n][m].val = my_map(self.grid_similarities[i][n][m].val, metric_min, metric_max, 1, 0)
-            if self.n_dims == 2:
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        self.grid_similarities[i][j][n][m].val = my_map(self.grid_similarities[i][j][n][m].val, metric_min, metric_max, 1, 0)
-                        #A[i][j] = self.grid_similarities[i][j][n][m].val
-            if self.n_dims == 3:
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        for k in range (self.grid_size):
-                            self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 1, 0)
-    else:
-        for m in range (self.n_algs):
-            if self.n_dims == 1:
-                for i in range (self.grid_size):
-                    self.grid_similarities[i][n][m].val = my_map(self.grid_similarities[i][n][m].val, metric_min, metric_max, 0, 1)
-            if self.n_dims == 2:
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        self.grid_similarities[i][j][n][m].val = my_map(self.grid_similarities[i][j][n][m].val, metric_min, metric_max, 0, 1)
-                        A[i][j] = self.grid_similarities[i][j][n][m].val
-            if self.n_dims == 3:
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        for k in range (self.grid_size):
-                            self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
+        if (self.is_dissims[n] == True):
+            for m in range (self.n_algs):
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities[i][n][m].val = my_map(self.grid_similarities[i][n][m].val, metric_min, metric_max, 1, 0)
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            #print('n: %s m: %s i: %d j: %d org: %f' % (self.metric_names[n], self.alg_names[m], i, j, self.grid_similarities[i][j][n][m].val))
+                            self.grid_similarities[i][j][n][m].val = my_map(self.grid_similarities[i][j][n][m].val, metric_min, metric_max, 1, 0)
+                            #print('n: %s m: %s i: %d j: %d new: %f' % (self.metric_names[n], self.alg_names[m], i, j, self.grid_similarities[i][j][n][m].val))
+                            #A[i][j] = self.grid_similarities[i][j][n][m].val
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 1, 0)
+        else:
+            for m in range (self.n_algs):
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities[i][n][m].val = my_map(self.grid_similarities[i][n][m].val, metric_min, metric_max, 0, 1)
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            self.grid_similarities[i][j][n][m].val = my_map(self.grid_similarities[i][j][n][m].val, metric_min, metric_max, 0, 1)
+                            #A[i][j] = self.grid_similarities[i][j][n][m].val
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
     #print(A)
     #gradient_plotting.gradient_map_show(A, 'test', 0, 1)
     
@@ -333,28 +342,19 @@ class GSM(object):
     for m in range (self.n_algs):
         for n in range (self.n_metrics):
             if self.n_dims == 1:
-                A = np.zeros((self.grid_size))
-                for i in range (self.grid_size):
-                    A[i] = self.grid_similarities[i][n][m].val
+                A = self.get_array_of_sim_metrics(n, m)
                 if (mode == 'save'):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
                     gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')                                      
             if self.n_dims == 2:
-                A = np.zeros((self.grid_size, self.grid_size))
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        A[i][j] = self.grid_similarities[i][j][n][m].val
+                A = self.get_array_of_sim_metrics(n, m)
                 if (mode == 'save'):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
                     gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient')   
             if self.n_dims == 3:
-                A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
-                for i in range (self.grid_size):
-                    for j in range (self.grid_size):
-                        for k in range (self.grid_size):
-                            A[i][j][k] = self.grid_similarities[i][j][k][n][m].val 
+                A = self.get_array_of_sim_metrics(n, m)
                 if (mode == save):
                     gradient_plotting.gradient_map(A, self.alg_names[m] + self.metric_names[n] + 'Gradient', filepath)
                 else:
@@ -366,15 +366,16 @@ class GSM(object):
         if self.n_dims == 1:
             A = np.zeros((self.grid_size))
             for i in range (self.grid_size):
-                max_n = None
+                max_s = None
                 for m in range (self.n_algs):
-                    if (max_n == None or max_n < self.grid_similarities[i][n][m].val):
-                        max_n = m
-                A[i] = max_n
+                    if (max_s == None or max_s < self.grid_similarities[i][n][m].val):
+                        max_s = self.grid_similarities[i][n][m].val
+                        max_m = m
+                A[i] = max_m
             B = self.convert_num_to_rgb(A)
             im = plt.imshow(B, vmin=0, vmax=1)
             plt.xticks([])
-            plt.title(self.metric_names[n] + 'Comparison', fontsize=32)
+            plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
             if (mode == 'save'):
                 plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
             else:
@@ -383,22 +384,24 @@ class GSM(object):
             A = np.zeros((self.grid_size, self.grid_size))
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
-                    max_n = None
+                    max_s = None
                     for m in range (self.n_algs):
-                        if (max_n == None or max_n < self.grid_similarities[i][j][n][m].val):
-                            max_n = m
-                    A[i][j] = max_n
+                        if (max_s == None or max_s < self.grid_similarities[i][j][n][m].val):
+                            max_s = self.grid_similarities[i][j][n][m].val
+                            max_m = m
+                    A[i][j] = max_m
             B = self.convert_num_to_rgb(A)
             im = plt.imshow(B, vmin=0, vmax=1)
             plt.xticks([])
             plt.yticks([])
-            plt.title(self.metric_names[n] + 'Comparison', fontsize=32)
+            plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
             if (mode == 'save'):
                 plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
             else:
                 plt.show()           
         if self.n_dims == 3:
             print('Gradient in 3D too difficult to show')
+    plt.close('all')
         
   def convert_num_to_rgb(self, A):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -445,222 +448,116 @@ class GSM(object):
                     print('Too many algorithms to represent color')
     if self.n_dims == 3:
         print('Too difficult to represent 3D gradient')
+        return
     return B
   
+  def interpolate_grid(self):
+    self.interps = []
+    for n in range (self.n_metrics):
+        alg_interps = []
+        for m in range (self.n_algs):
+            if (self.n_dims == 1):
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
+            if (self.n_dims == 2):
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
+            if (self.n_dims == 3):
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
+        self.interps.append(alg_interps)
+  
   def plot_surfaces(self, mode='save', filepath=''):
-    return
-        
-        
-
-        
-
-#in-file testing
-def gsm(x_data, y_data, name='', is_dmp_on=False, grid_size=5, grid_x_dist=-1.0, grid_y_dist=-1.0):
-    plt_fpath = '../pictures/lte_writing/' + name + '/' + str(grid_size) + '_grid/'
-    try:
-        os.makedirs(plt_fpath)
-    except OSError:
-        print ("Creation of the directory %s failed" % plt_fpath)
-    else:
-        print ("Successfully created the directory %s" % plt_fpath)
-    ## Optimize JA for trajectory ##
-    print('Optimizing JA')
-    lambda_x = optimize_ja.opt_lambda_traj_1d(x_data)
-    lambda_y = optimize_ja.opt_lambda_traj_1d(y_data)
-    ## Get deform grid ##
-    print('Getting Deform Grid')
-    #Constants--can be changed
-    se_dist = get_start_end_dist(x_data, y_data)
-    ttl_dist = get_total_dist(x_data, y_data)
-    middle = ((se_dist + ttl_dist)**0.5)
-    if (grid_x_dist < 0.0):
-        grid_x_dist = middle
-    if (grid_y_dist < 0.0):
-        grid_y_dist = middle
-    #Center should always be start of traj
-    center = deform_hello_grid.point(x_data[0], y_data[0])
-    grid = deform_hello_grid.create_grid(grid_size, grid_x_dist, grid_y_dist, center)
-    ## deform for each point on grid ##
-    print('Deforming Trajectory')
-    grid_deforms_x = [[deform_hello_grid.deformation(x_data, grid[i][j].x, given_final=[], given_lambda=lambda_x, dmp_on=is_dmp_on) for i in range (grid_size)] for j in range (grid_size)]
-    grid_deforms_y = [[deform_hello_grid.deformation(y_data, grid[i][j].y, given_final=[], given_lambda=lambda_y, dmp_on=is_dmp_on) for i in range (grid_size)] for j in range (grid_size)]
-    ## get hd/fd for each deformation ##
-    print('Getting hd/fd')
-    #set up arrays
-    starts_x = np.zeros((grid_size, grid_size))
-    starts_y = np.zeros((grid_size, grid_size))
-    fd_lte = np.zeros((grid_size, grid_size))
-    hd_lte = np.zeros((grid_size, grid_size))
-    fd_ja = np.zeros((grid_size, grid_size))
-    hd_ja = np.zeros((grid_size, grid_size))
-    if is_dmp_on:
-        fd_dmp = np.zeros((grid_size, grid_size))
-        hd_dmp = np.zeros((grid_size, grid_size))
-    org_traj = np.zeros((len(x_data), 2))
-    comp_traj = np.zeros((np.shape(org_traj)))
-    org_traj[:, 0] = np.transpose(x_data)
-    org_traj[:, 1] = np.transpose(y_data)
-    for i in range (grid_size):
-        for j in range (grid_size):
-            print('Starting')
-            starts_x[i][j] = grid_deforms_x[i][j].lte[0]
-            starts_y[i][j] = grid_deforms_y[i][j].lte[0]
-            #lte hd/fd
-            comp_traj[:, 0] = np.transpose(grid_deforms_x[i][j].lte)
-            comp_traj[:, 1] = np.transpose(grid_deforms_y[i][j].lte)
-            fd_lte[i][j] = similaritymeasures.frechet_dist(org_traj, comp_traj)
-            hd_lte[i][j] = max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
-            #ja hd/fd
-            comp_traj[:, 0] = np.transpose(grid_deforms_x[i][j].ja)
-            comp_traj[:, 1] = np.transpose(grid_deforms_y[i][j].ja)
-            fd_ja[i][j] = similaritymeasures.frechet_dist(org_traj, comp_traj)
-            hd_ja[i][j] = max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
-            #dmp hd/fd
-            if is_dmp_on:
-                comp_traj[:, 0] = np.transpose(grid_deforms_x[i][j].dmp)
-                comp_traj[:, 1] = np.transpose(grid_deforms_y[i][j].dmp)
-                fd_dmp[i][j] = similaritymeasures.frechet_dist(org_traj, comp_traj)
-                hd_dmp[i][j] = max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
-    print(starts_x)
-    print(starts_y)
-    print(fd_lte)
-    print(hd_lte)
-    print(fd_ja)
-    print(hd_ja)
-    if is_dmp_on:
-        print(fd_dmp)
-        print(hd_dmp)
-    ## normalize hd/fd ##
-    print('Normalizing hd/fd')
-    if is_dmp_on:
-        #get maxes
-        max_fd = max(np.amax(fd_dmp), np.amax(fd_dmp), np.amax(fd_dmp))
-        max_hd = max(np.amax(hd_dmp), np.amax(hd_dmp), np.amax(hd_dmp))
-        fd_dmp = np.ones((np.shape(fd_dmp))) - (fd_dmp / max_fd)
-        hd_dmp = np.ones((np.shape(hd_dmp))) - (hd_dmp / max_hd)
-    else:
-        max_fd = max(np.amax(fd_lte), np.amax(fd_ja))
-        max_hd = max(np.amax(hd_lte), np.amax(hd_ja))
-    fd_lte = np.ones((np.shape(fd_lte))) - (fd_lte / max_fd)
-    hd_lte = np.ones((np.shape(hd_lte))) - (hd_lte / max_hd)
-    fd_ja = np.ones((np.shape(fd_ja))) - (fd_ja / max_fd)
-    hd_ja = np.ones((np.shape(hd_ja))) - (hd_ja / max_hd)
-    ## plot results ##
-    print('Plotting Results')
-    #plot deformations & store in h5
-    print(name + '_grid' + str(grid_size) + '.h5')
-    fp = h5py.File (name + '_grid' + str(grid_size) + '.h5', 'w')
-    dset_name = name
-    for i in range (grid_size):
-        for j in range (grid_size):
-            ax = plt.subplot2grid((grid_size, grid_size), (i, j))
-            ax.plot(grid_deforms_x[i][j].traj, grid_deforms_y[i][j].traj, 'b')
-            ax.plot(grid_deforms_x[i][j].lte, grid_deforms_y[i][j].lte, 'g')
-            ax.plot(grid_deforms_x[i][j].ja, grid_deforms_y[i][j].ja, 'r')
-            if is_dmp_on:
-                ax.plot(grid_deforms_x[i][j].dmp, grid_deforms_y[i][j].dmp, 'm')
-            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].traj)
-            fp.create_dataset(dset_name + '/original/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].traj)
-            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].lte)
-            fp.create_dataset(dset_name + '/lte/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].lte)
-            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].ja)
-            fp.create_dataset(dset_name + '/ja/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].ja)
-            if is_dmp_on:
-                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/x', data=grid_deforms_x[i][j].dmp)
-                fp.create_dataset(dset_name + '/dmp/(' + str(i) + ', ' + str(j) + ')/y', data=grid_deforms_y[i][j].dmp)
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig(plt_fpath + 'deforms.png')
-    #store hd/fd data in h5
-    fp.create_dataset(dset_name + '/lte/fd', data=fd_lte)
-    fp.create_dataset(dset_name + '/lte/hd', data=hd_lte)
-    fp.create_dataset(dset_name + '/ja/fd', data=fd_ja)
-    fp.create_dataset(dset_name + '/ja/hd', data=hd_ja)
-    if is_dmp_on:
-        fp.create_dataset(dset_name + '/dmp/fd', data=fd_dmp)
-        fp.create_dataset(dset_name + '/dmp/hd', data=hd_dmp)
-    #gradient maps
-    gradient_plotting.gradient_map(fd_lte, name + ' LTE Frechet Distance Gradient', fpath=plt_fpath)
-    gradient_plotting.gradient_map(hd_lte, name + ' LTE Haussdorf Distance Gradient', fpath=plt_fpath)
-    gradient_plotting.gradient_map(fd_ja, name + ' JA Frechet Distance Gradient', fpath=plt_fpath)
-    gradient_plotting.gradient_map(hd_ja, name + ' JA Haussdorf Distance Gradient', fpath=plt_fpath)
-    if is_dmp_on:
-        gradient_plotting.gradient_map(fd_dmp, name + ' DMP Frechet Distance Gradient', fpath=plt_fpath)
-        gradient_plotting.gradient_map(hd_dmp, name + ' DMP Haussdorf Distance Gradient', fpath=plt_fpath)
-        gradient_plotting.rgb_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Compared Reproductions'), fpath=plt_fpath)
-        gradient_plotting.rgb_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Compared Reproductions'), fpath=plt_fpath)
-        gradient_plotting.strongest_gradient(fd_ja, fd_lte, fd_dmp, name=(name + ' Frechet Distance Best Reproductions'), fpath=plt_fpath)
-        gradient_plotting.strongest_gradient(hd_ja, hd_lte, hd_dmp, name=(name + ' Haussdorf Distance Best Reproductions'), fpath=plt_fpath)
-    else:
-        gradient_plotting.rgb_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Compared Reproductions'), fpath=plt_fpath)
-        gradient_plotting.rgb_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Compared Reproductions'), fpath=plt_fpath)
-        gradient_plotting.strongest_gradient(fd_ja, fd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Frechet Distance Best Reproductions'), fpath=plt_fpath)
-        gradient_plotting.strongest_gradient(hd_ja, hd_lte, np.zeros((np.shape(fd_lte))), name=(name + ' Haussdorf Distance Best Reproductions'), fpath=plt_fpath)
-    #set up grid for 3d surfaces
-    x_vals = starts_x[0, :]
-    y_vals = starts_y[:, 0]
-    xnew = np.linspace(x_vals[0], x_vals[grid_size - 1], 1000)
-    ynew = np.linspace(y_vals[0], y_vals[grid_size - 1], 1000)
-    X, Y = np.meshgrid(xnew, ynew)
-    #interpolate functions & plot interpolations
-    fd_lte_func = interp2d(x_vals, y_vals, fd_lte)
-    fd_lte_plot = fd_lte_func(xnew, ynew)
-    hd_lte_func = interp2d(x_vals, y_vals, hd_lte)
-    hd_lte_plot = fd_lte_func(xnew, ynew)
-    fd_ja_func = interp2d(x_vals, y_vals, fd_ja)
-    fd_ja_plot = fd_ja_func(xnew, ynew)
-    hd_ja_func = interp2d(x_vals, y_vals, hd_ja)
-    hd_ja_plot = hd_ja_func(xnew, ynew)
-    if is_dmp_on:
-        fd_dmp_func = interp2d(x_vals, y_vals, fd_dmp)
-        fd_dmp_plot = fd_dmp_func(xnew, ynew)
-        hd_dmp_func = interp2d(x_vals, y_vals, hd_dmp)
-        hd_dmp_plot = hd_dmp_func(xnew, ynew)
-    #plot all three on a single plot?
-    #have all seperate plots?
-    #how to show which sirface is better at a single point?
-    #different color maps
-    #how do I show hd vs. fd?
-    f_size = 32
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, fd_lte_plot,cmap='viridis', edgecolor='none')
-    ax.set_title(name + ' LTE Frechet Distance', fontsize=f_size)
-    #plt.show()
-    plt.savefig(plt_fpath + name + ' LTE Frechet Distance Surface.png')
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, hd_lte_plot,cmap='viridis', edgecolor='none')
-    ax.set_title(name + ' LTE Haussdorf Distance', fontsize=f_size)
-    #plt.show()
-    plt.savefig(plt_fpath + name + ' LTE Haussdorf Distance Surface.png')
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, fd_ja_plot,cmap='viridis', edgecolor='none')
-    ax.set_title(name + ' JA Frechet Distance', fontsize=f_size)
-    #plt.show()
-    plt.savefig(plt_fpath + name + ' JA Frechet Distance Surface.png')
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, hd_ja_plot,cmap='viridis', edgecolor='none')
-    ax.set_title(name + ' JA Haussdorf Distance', fontsize=f_size)
-    #plt.show()
-    plt.savefig(plt_fpath + name + ' JA Haussdorf Distance Surface.png')
-    if is_dmp_on:
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.plot_surface(X, Y, fd_dmp_plot,cmap='viridis', edgecolor='none')
-        ax.set_title(name + ' DMP Frechet Distance', fontsize=f_size)
-        #plt.show()
-        plt.savefig(plt_fpath + name + ' DMP Frechet Distance Surface.png')
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.plot_surface(X, Y, hd_dmp_plot,cmap='viridis', edgecolor='none')
-        ax.set_title(name + ' DMP Haussdorf Distance', fontsize=f_size)
-        #plt.show()
-        plt.savefig(plt_fpath + name + ' DMP Haussdorf Distance Surface.png')
-    fp.close()
+    self.interpolate_grid()
+    n_surf = 100
+    for n in range (self.n_metrics):
+        for m in range (self.n_algs):
+            if self.n_dims == 1:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                plt_new = np.zeros(np.shape(xnew))
+                for t in range (len(xnew)):
+                    arr = np.array([xnew[t]]).reshape(self.n_dims)
+                    plt_new[t] = self.interps[n][m](arr)
+                fig = plt.figure()
+                plt.plot(xnew, plt_new)
+                plt.set_title(self.alg_names[m] + ' ' + self.metric_names[n] + ' Plot', fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(filepath + self.alg_names[m] + '_' + self.metric_names[n] + '_Plot.png')
+                else:
+                    plt.show()                       
+            if self.n_dims == 2:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+                X, Y = np.meshgrid(xnew, ynew)
+                plt_new = np.zeros((len(xnew), len(ynew)))
+                for t in range (len(xnew)):
+                    for u in range (len(ynew)):
+                        arr = np.array([xnew[t], ynew[u]]).reshape(self.n_dims)
+                        plt_new[t][u] = self.interps[n][m](arr)
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(X, Y, plt_new, cmap='viridis', edgecolor='none')
+                ax.set_title(self.alg_names[m] + ' ' + self.metric_names[n] + ' Surface', fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(filepath + self.alg_names[m] + '_' + self.metric_names[n] + '_Surface.png')
+                else:
+                    plt.show()           
+            if self.n_dims == 3:
+                print('Surface in 3D too difficult to show')
     plt.close('all')
+    
+  def get_array_of_sim_metrics(self, metric_num, alg_num):
+    if self.n_dims == 1:
+        A = np.zeros((self.grid_size))
+        for i in range (self.grid_size):
+            A[i] = self.grid_similarities[i][metric_num][alg_num].val                                
+    if self.n_dims == 2:
+        A = np.zeros((self.grid_size, self.grid_size))
+        for i in range (self.grid_size):
+            for j in range (self.grid_size):
+                A[i][j] = self.grid_similarities[i][j][metric_num][alg_num].val
+    if self.n_dims == 3:
+        A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
+        for i in range (self.grid_size):
+            for j in range (self.grid_size):
+                for k in range (self.grid_size):
+                    A[i][j][k] = self.grid_similarities[i][j][k][metric_num][alg_num].val
+    return A
+    
+  def get_plots_at_point1(self, i, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    fig = plt.figure()
+    plt.plot(self.org_x, 'k')
+    for n in range (self.n_algs):
+        plt.plot(self.grid_deforms_x[i][n].traj, colors[n])
+    plt.title('Deformations at grid point (' + str(i) + ')', fontsize=self.f_size)
+    if (mode == 'save'):
+        plt.savefig(filepath + 'Deformations at grid point (' + str(i) + ').png')
+    else:
+        plt.show()   
+  
+  def get_plots_at_point2(self, i, j, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    fig = plt.figure()
+    plt.plot(self.org_x, self.org_y, 'k')
+    for n in range (self.n_algs):
+        plt.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n])
+    plt.title('Deformations at grid point (' + str(i) ', ' + str(j) + ')', fontsize=self.f_size)
+    if (mode == 'save'):
+        plt.savefig(filepath + 'Deformations at grid point (' + str(i) ', ' + str(j) + ').png')
+    else:
+        plt.show()   
+    
+  def get_plots_at_point3(self, i, j, k, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(self.org_x, self.org_y, self.org_z, 'k')
+    for n in range (self.n_algs):
+        ax.plot(self.grid_deforms_x[i][j][k][n].traj, self.grid_deforms_y[i][j][k][n].traj, self.grid_deforms_z[i][j][k][n].traj, colors[n])
+    plt.title('Deformations at grid point (' + str(i) ', ' + str(j) + ', ' + str(k) + ')', fontsize=self.f_size)
+    if (mode == 'save'):
+        plt.savefig(filepath + 'Deformations at grid point (' + str(i) ', ' + str(j) + ', ' + str(k) + ').png')
+    else:
+        plt.show()   
+    
 
 def main2():
     print('Starting')
@@ -683,17 +580,8 @@ def main2():
             y_data = demo.get('y')
             y_data = np.array(y_data)
             hf.close()
-            gsm(x_data, y_data, shape_names[i], is_dmp_on=False)
             #gsm(x_data, y_data, shape_names[i] + '_dmp_on', is_dmp_on=True)
-    #filename = '../h5 files/Circle_drawing_demo.h5'
-    #hf = h5py.File(filename, 'r')
-    #circ = hf.get('Circle')
-    #x_data = circ.get('x')
-    #x_data = np.array(x_data)
-    #y_data = circ.get('y')
-    #y_data = np.array(y_data)
-    #hf.close()
-    #gsm(x_data, y_data, 'Circle', is_dmp_on=False)
+            gsm(x_data, y_data, shape_names[i], is_dmp_on=False)
 
 def my_hd2(x1, x2, y1, y2):
     org_traj = np.zeros((len(x1), 2))
@@ -711,15 +599,6 @@ def my_fd2(x1, x2, y1, y2):
     org_traj[:, 1] = np.transpose(y1)
     comp_traj[:, 0] = np.transpose(x2)
     comp_traj[:, 1] = np.transpose(y2)
-    #print('org_x0')
-    #print(org_traj[0, 0])
-    #print('org_y0')
-    #print(org_traj[0, 1])
-    #print('comp_x0')
-    #print(comp_traj[0, 0])
-    #print('comp_y0')
-    #print(comp_traj[0, 1])
-    #print('start: (%f, %f)' % (comp_traj[0][0], comp_traj[0][1]))
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
 def main():
@@ -745,14 +624,20 @@ def main():
     #print(y_data)
     my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
     my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
-    my_gsm.add_sim_metric(my_fd2, name='Haussdorf', is_disssim=True)
+    my_gsm.add_sim_metric(my_fd2, name='Frechet', is_disssim=True)
+    my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_disssim=True)
     #my_gsm.add_traj_dimension(x_data, 'z')
-    my_gsm.create_grid(10, [20, 20])
+    my_gsm.create_grid(3, [20, 20])
     my_gsm.deform_traj(plot=False)
     my_gsm.calc_metrics(d_sample=True)
-    my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
-    my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
-    
-    
+    #my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
+    #my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
+    #my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
+    #my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
+    my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
+    my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
+    my_gsm.get_plots_at_point2(0, 1)
+    my_gsm.get_plots_at_point2(2, 1)
+     
 if __name__ == '__main__':
   main()

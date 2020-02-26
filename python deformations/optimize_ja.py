@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 
 global glob_traj
 
+
+
 def downsample_1d(traj, n=100):
     npts = np.linspace(0, len(traj) - 1, n)
     out = np.zeros((n))

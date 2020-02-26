@@ -46,6 +46,7 @@ def create_grid(grid_size, grid_x_dist, grid_y_dist, center):
     
 
 def main():
+    use_dmp = 1
     ## Open h5 file and pull data ##
     filename = '../h5 files/hello2.h5'
     hf = h5py.File(filename, 'r')

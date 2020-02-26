@@ -105,12 +105,14 @@ def perform_lte_improved(traj, initial=[], end=[]):
   if len(np.shape(traj)) > 1:
     if np.shape(traj)[0] > np.shape(traj)[1]:
       traj = np.transpose(traj)
-  traj = np.reshape(traj, (1, max(np.shape(traj))))
+  ntraj = np.reshape(traj, (1, max(np.shape(traj))))
   ## LTE ##
   indeces = [1, max(np.shape(traj)) - 1]
   lte_fixed_points = generate_lte_fixed_points(indeces, [initial, end])
-  lte_traj = perform_lte(traj, lte_fixed_points)
-  return lte_traj
+  lte_traj = perform_lte(ntraj, lte_fixed_points)
+  lte_traj = np.reshape(lte_traj, np.shape(traj))
+  #print(lte_traj)
+  return lte_traj[0]
 
 #in-file testing
 def main():
