@@ -539,9 +539,9 @@ class GSM(object):
     plt.plot(self.org_x, self.org_y, 'k')
     for n in range (self.n_algs):
         plt.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n])
-    plt.title('Deformations at grid point (' + str(i) ', ' + str(j) + ')', fontsize=self.f_size)
+    plt.title('Deformations at grid point (' + str(i) + ', ' + str(j) + ')', fontsize=self.f_size)
     if (mode == 'save'):
-        plt.savefig(filepath + 'Deformations at grid point (' + str(i) ', ' + str(j) + ').png')
+        plt.savefig(filepath + 'Deformations at grid point (' + str(i) + ', ' + str(j) + ').png')
     else:
         plt.show()   
     
@@ -552,11 +552,50 @@ class GSM(object):
     ax.plot(self.org_x, self.org_y, self.org_z, 'k')
     for n in range (self.n_algs):
         ax.plot(self.grid_deforms_x[i][j][k][n].traj, self.grid_deforms_y[i][j][k][n].traj, self.grid_deforms_z[i][j][k][n].traj, colors[n])
-    plt.title('Deformations at grid point (' + str(i) ', ' + str(j) + ', ' + str(k) + ')', fontsize=self.f_size)
+    plt.title('Deformations at grid point (' + str(i) + ', ' + str(j) + ', ' + str(k) + ')', fontsize=self.f_size)
     if (mode == 'save'):
-        plt.savefig(filepath + 'Deformations at grid point (' + str(i) ', ' + str(j) + ', ' + str(k) + ').png')
+        plt.savefig(filepath + 'Deformations at grid point (' + str(i) + ', ' + str(j) + ', ' + str(k) + ').png')
     else:
         plt.show()   
+          
+  def plot_sim(self, sim, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    self.interpolate_grid()
+    n_surf = 1000
+    for n in range (self.n_metrics):
+        if self.n_dims == 1:
+            xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+            fig = plt.figure()
+            plt.plot(self.org_x[0], 'k*')
+            for m in range (self.n_algs):
+                for t in range (len(xnew)):
+                    arr = np.array([xnew[t]]).reshape(self.n_dims)
+                    if self.interps[n][m](arr) > sim:
+                        plt.plot(self.x_vals[t], colors[m] + '.')
+            plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
+            if (mode == 'save'):
+                plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
+            else:
+                plt.show()                       
+        if self.n_dims == 2:
+            xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+            ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+            fig = plt.figure()
+            plt.plot(self.org_x[0], self.org_y[0], 'k*')
+            for m in range (self.n_algs):
+                for t in range (len(xnew)):
+                    for u in range (len(ynew)):
+                        arr = np.array([xnew[t], ynew[u]]).reshape(self.n_dims)
+                        if self.interps[n][m](arr) > sim:
+                            plt.plot(self.x_vals[t], self.y_vals[u], colors[m] + '.')
+            plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
+            if (mode == 'save'):
+                plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
+            else:
+                plt.show()           
+        if self.n_dims == 3:
+            print('Similarity plot in 3D too difficult to show')
+    plt.close('all')
     
 
 def main2():
@@ -601,7 +640,7 @@ def my_fd2(x1, x2, y1, y2):
     comp_traj[:, 1] = np.transpose(y2)
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
-def main():
+def main3():
     plt_fpath = '../pictures/lte_writing/test/'
     try:
         os.makedirs(plt_fpath)
@@ -638,6 +677,47 @@ def main():
     my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
     my_gsm.get_plots_at_point2(0, 1)
     my_gsm.get_plots_at_point2(2, 1)
+    
+def main():
+    shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    for i in range (len(shape_names)):
+            print(shape_names[i])
+            filename = '../h5 files/' + shape_names[i] +'_drawing_demo.h5'
+            hf = h5py.File(filename, 'r')
+            demo = hf.get(shape_names[i])
+            x_data = demo.get('x')
+            x_data = np.array(x_data)
+            y_data = demo.get('y')
+            y_data = np.array(y_data)
+            hf.close()
+            plt_fpath = '../pictures/lte_writing/GSM/' + shape_names[i] + '/'
+            try:
+                os.makedirs(plt_fpath)
+            except OSError:
+                print ("Creation of the directory %s failed" % plt_fpath)
+            else:
+                print ("Successfully created the directory %s" % plt_fpath)
+            my_gsm = GSM()
+            my_gsm.add_traj_dimension(x_data, 'x')
+            my_gsm.add_traj_dimension(y_data, 'y')
+            my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
+            my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
+            my_gsm.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+            my_gsm.add_sim_metric(my_fd2, name='Frechet', is_disssim=True)
+            my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_disssim=True)
+            #my_gsm.add_traj_dimension(x_data, 'z')
+            my_gsm.create_grid(10, [20, 20])
+            my_gsm.deform_traj(plot=False)
+            my_gsm.calc_metrics(d_sample=True)
+            #my_gsm.save_results(plt_fpath + 'deform_data.h5')
+            #my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
+            my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
+            #my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
+            my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
+            #my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
+            my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
+            #my_gsm.get_plots_at_point2(0, 1)
+            #my_gsm.get_plots_at_point2(2, 1)
      
 if __name__ == '__main__':
   main()
