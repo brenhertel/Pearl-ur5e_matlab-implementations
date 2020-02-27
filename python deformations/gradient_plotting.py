@@ -17,7 +17,8 @@ def gradient_map_show(A, name='', min_in=0, max_in=1):
     plt.xticks([])
     plt.yticks([])
     plt.colorbar(im)
-    plt.title(name, fontsize=32)
+    print(name)
+    #plt.title(name, fontsize=32)
     plt.show()
 
 def rgb_gradient(A, B, C, name='', fpath='', min_in=0, max_in=1):
