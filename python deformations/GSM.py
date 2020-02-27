@@ -61,9 +61,9 @@ class GSM(object):
     self.n_metrics = 0
     self.n_dims = 0
     self.traj_len = 0
-    self.org_x = None
-    self.org_y = None
-    self.org_z = None
+    self.org_x = []
+    self.org_y = []
+    self.org_z = []
     self.algs = []
     self.alg_names = []
     self.metrics = []
@@ -82,11 +82,11 @@ class GSM(object):
     elif (dim == 'z'):
         self.org_z = traj
     else:
-        if (self.org_x == None):
+        if (self.org_x == []):
             self.org_x = traj
-        elif (self.org_y == None):
+        elif (self.org_y == []):
             self.org_y = traj
-        elif (self.org_z == None):
+        elif (self.org_z == []):
             self.org_z = traj
         else:
             print('Error: trajectory not added. No available trajectory slots and no dimension specified')
@@ -106,6 +106,8 @@ class GSM(object):
     self.is_dissims.append(is_dissim)
     
   def create_grid(self, given_grid_size, dists, disp=False):
+    if (self.org_x == []):
+        print('WARNING: No trajectories given')
     self.grid_size = given_grid_size
     if (self.n_dims >= 1):
         center = point(self.org_x[0])
@@ -805,16 +807,16 @@ def main():
     y_data = downsample_1d(y_data)
     hf.close()
     my_gsm = GSM()
-    #my_gsm.add_traj_dimension(x_data, 'x')
-    #my_gsm.add_traj_dimension(y_data, 'y')
+    my_gsm.add_traj_dimension(x_data, 'x')
+    my_gsm.add_traj_dimension(y_data, 'y')
     my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
     my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
     my_gsm.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
     my_gsm.add_sim_metric(my_fd2, name='Frechet', is_dissim=True)
     my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_dissim=True)
     #my_gsm.add_traj_dimension(x_data, 'z')
-    #my_gsm.create_grid(10, [20, 20])
-    my_gsm.create_grid(5, [20, 20])
+    my_gsm.create_grid(10, [20, 20])
+    #my_gsm.create_grid(5, [20, 20])
     my_gsm.deform_traj(plot=False)
     my_gsm.calc_metrics(d_sample=False)
     my_gsm.save_results('straight_ribbon_deform_data_ds.h5')
