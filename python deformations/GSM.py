@@ -289,6 +289,8 @@ class GSM(object):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
                                 self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 1, 0)
+                if (m == 3):
+                    print(self.get_array_of_sim_metrics(n, m))
         else:
             for m in range (self.n_algs):
                 if self.n_dims == 1:
@@ -304,6 +306,7 @@ class GSM(object):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
                                 self.grid_similarities[i][j][k][n][m].val = my_map(self.grid_similarities[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
+                
     #print(A)
     #gradient_plotting.gradient_map_show(A, 'test', 0, 1)
     
@@ -740,7 +743,7 @@ def main3():
     my_gsm.get_plots_at_point2(0, 1)
     my_gsm.get_plots_at_point2(2, 1)
     
-def main():
+def main4():
     #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
     shape_names = ['Straight_Ribbon']
     for i in range (len(shape_names)):
@@ -783,6 +786,46 @@ def main():
             #my_gsm.get_plots_at_point2(0, 2, mode='show')
             #my_gsm.get_plots_at_point2(5, 0, mode='show')
             #my_gsm.get_plots_at_point2(6, 7, mode='show')
+            
+def main():
+    #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    name = 'Straight_Ribbon'
+    filename = '../h5 files/' + name +'_drawing_demo.h5'
+    hf = h5py.File(filename, 'r')
+    demo = hf.get(name)
+    x_data = demo.get('x')
+    x_data = np.array(x_data)
+    x_data = downsample_1d(x_data)
+    y_data = demo.get('y')
+    y_data = np.array(y_data)
+    y_data = downsample_1d(y_data)
+    hf.close()
+    my_gsm = GSM()
+    my_gsm.add_traj_dimension(x_data, 'x')
+    my_gsm.add_traj_dimension(y_data, 'y')
+    my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
+    my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
+    my_gsm.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+    my_gsm.add_sim_metric(my_fd2, name='Frechet', is_disssim=True)
+    my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_disssim=True)
+    #my_gsm.add_traj_dimension(x_data, 'z')
+    my_gsm.create_grid(10, [20, 20])
+    my_gsm.deform_traj(plot=False)
+    my_gsm.calc_metrics(d_sample=False)
+    my_gsm.save_results('straight_ribbon_deform_data_g5.h5')
+    #my_gsm.read_from_h5('straight_ribbon_deform_data.h5')
+    #my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
+    #my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
+    #my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
+    #my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
+    #my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
+    #my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
+    print('input:')
+    a = float(input())
+    my_gsm.plot_sim(sim=a, mode='show')
+    #my_gsm.get_plots_at_point2(0, 2, mode='show')
+    #my_gsm.get_plots_at_point2(5, 0, mode='show')
+    #my_gsm.get_plots_at_point2(6, 7, mode='show')
      
 if __name__ == '__main__':
   main()

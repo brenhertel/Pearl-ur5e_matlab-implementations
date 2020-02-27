@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 #to be called from another file
 #uses code in the pydmps folder
 def perform_dmp(traj, given_points=0, alpha_y=None, beta_y=None):
-  dmp = pydmps.dmp_discrete.DMPs_discrete(n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y, dt=0.001)
+  dmp = pydmps.dmp_discrete.DMPs_discrete(n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y, dt=0.01)
   y_track = []
   dy_track = []
   ddy_track = []
