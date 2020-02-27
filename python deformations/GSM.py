@@ -310,6 +310,7 @@ class GSM(object):
   def save_results(self, filename='unspecified.h5'):
     fp = h5py.File(filename, 'w')
     dset_name = 'GSM'
+    fp.create_dataset(dset_name + '/grid_sz', data=self.grid_size)
     for m in range (self.n_algs):
             if self.n_dims == 1:
                 for i in range (self.grid_size):
@@ -330,6 +331,70 @@ class GSM(object):
         for n in range (self.n_metrics):
             A = self.get_array_of_sim_metrics(n, m)
             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
+    fp.close()
+    
+  def read_from_h5(self, filename):
+    fp = h5py.File(filename, 'w')
+    dset_name = 'GSM'
+    dset = fp.get(dset_name)
+    self.grid_size = dset.get('grid_sz')
+    for m in range (self.n_algs):
+        alg_name = self.alg_names[m]
+        alg = dset.get(alg_name)
+        if self.n_dims == 1:
+            for i in range (self.grid_size):
+                deform_name = '(' + str(i) + ')'
+                deform = alg.get(deform_name)
+                x = deform.get('x')
+                self.grid_deforms_x[i][m].traj = np.array(x)
+                self.x_vals[i] = self.grid_deforms_x[i][m].traj[0]
+        if self.n_dims == 2:
+            for i in range (self.grid_size):
+                for j in range (self.grid_size):
+                    deform_name = '(' + str(i) + ', ' + str(j) + ')'
+                    deform = alg.get(deform_name)
+                    x = deform.get('x')
+                    self.grid_deforms_x[i][j][m].traj = np.array(x)
+                    y = deform.get('y')
+                    self.grid_deforms_y[i][j][m].traj = np.array(y)
+                    if (j == 0):
+                        self.x_vals[i] = self.grid_deforms_x[i][j][m].traj[0]
+                    if (i == 0):
+                        self.y_vals[j] = self.grid_deforms_y[i][j][m].traj[0]
+        if self.n_dims == 3:
+            for i in range (self.grid_size):
+                for j in range (self.grid_size):
+                    for k in range (self.grid_size):
+                        deform_name = '(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')'
+                        deform = alg.get(deform_name)
+                        x = deform.get('x')
+                        self.grid_deforms_x[i][j][k][m].traj = np.array(x)
+                        x = deform.get('y')
+                        self.grid_deforms_y[i][j][k][m].traj = np.array(y)
+                        z = deform.get('z')
+                        self.grid_deforms_y[i][j][k][m].traj = np.array(z)
+                        if (j == 0 and k == 0):
+                            self.x_vals[i] = self.grid_deforms_x[i][j][k][m].traj[0]
+                        if (i == 0 and k == 0):
+                            self.y_vals[j] = self.grid_deforms_y[i][j][k][m].traj[0]
+                        if (i == 0 and j == 0):
+                            self.y_vals[k] = self.grid_deforms_z[i][j][k][m].traj[0]
+        for n in range (self.n_metrics):
+            metric_name = self.metric_names[n]
+            metric = alg.get(metric_name)
+            metric = np.array(metric)
+            if self.n_dims == 1:
+                for i in range (self.grid_size):
+                    self.grid_similarities[i][n][m].val = metric[i]
+            if self.n_dims == 2:
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        self.grid_similarities[i][j][n][m].val = metric[i][j]
+            if self.n_dims == 3:
+                for i in range (self.grid_size):
+                    for j in range (self.grid_size):
+                        for k in range (self.grid_size):
+                            self.grid_similarities[i][j][k][n][m].val = metric[i][j][k]
     fp.close()
   
   def plot_gradients(self, mode='save', filepath=''):
@@ -567,6 +632,7 @@ class GSM(object):
                     if self.interps[n][m](arr) > sim:
                         plt.plot(xnew[t], colors[m] + '.')
                 plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
+                plt.xticks(self.x_vals)
                 if (mode == 'save'):
                     plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
                 else:
@@ -583,6 +649,8 @@ class GSM(object):
                         if self.interps[n][m](arr) > sim:
                             plt.plot(xnew[t], ynew[u], colors[m] + '.')
                 plt.title(self.metric_names[n] + ' similarity of ' + str(sim) + 'for ' + self.alg_names[m] + ' Plot', fontsize=self.f_size)
+                plt.xticks(self.x_vals)
+                plt.yticks(self.y_vals)
                 if (mode == 'save'):
                     plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
                 else:
@@ -704,17 +772,17 @@ def main():
             my_gsm.create_grid(10, [20, 20])
             my_gsm.deform_traj(plot=False)
             my_gsm.calc_metrics(d_sample=True)
-            #my_gsm.save_results(plt_fpath + 'deform_data.h5')
+            my_gsm.save_results('straight_ribbon_deform_data.h5')
             #my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
             #my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
             #my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
             #my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
             #my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
             #my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
-            my_gsm.plot_sim(sim=0.9, mode='show')
-            my_gsm.get_plots_at_point2(0, 2, mode='show')
-            my_gsm.get_plots_at_point2(5, 0, mode='show')
-            my_gsm.get_plots_at_point2(6, 7, mode='show')
+            #my_gsm.plot_sim(sim=0.9, mode='show')
+            #my_gsm.get_plots_at_point2(0, 2, mode='show')
+            #my_gsm.get_plots_at_point2(5, 0, mode='show')
+            #my_gsm.get_plots_at_point2(6, 7, mode='show')
      
 if __name__ == '__main__':
   main()
