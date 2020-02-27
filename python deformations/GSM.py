@@ -311,31 +311,25 @@ class GSM(object):
     fp = h5py.File(filename, 'w')
     dset_name = 'GSM'
     for m in range (self.n_algs):
-        for n in range (self.n_metrics):
             if self.n_dims == 1:
-                A = np.zeros((self.grid_size))
                 for i in range (self.grid_size):
                     fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ')/x', data=self.grid_deforms_x[i][m].traj)
-                    A[i] = self.grid_similarities[i][n][m].val
-                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
             if self.n_dims == 2:
-                A = np.zeros((self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ')/x', data=self.grid_deforms_x[i][j][m].traj)
                         fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ')/y', data=self.grid_deforms_y[i][j][m].traj)
-                        A[i][j] = self.grid_similarities[i][j][n][m].val
-                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
             if self.n_dims == 3:
-                A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         for k in range (self.grid_size):
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/x', data=self.grid_deforms_x[i][j][k][m].traj)
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/y', data=self.grid_deforms_y[i][j][k][m].traj)
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/z', data=self.grid_deforms_z[i][j][k][m].traj)
-                            A[i][j][k] = self.grid_similarities[i][j][k][n][m].val
-                fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
+    for m in range (self.n_algs):
+        for n in range (self.n_metrics):
+            A = self.get_array_of_sim_metrics(n, m)
+            fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/' + self.metric_names[n], data=A)
     fp.close()
   
   def plot_gradients(self, mode='save', filepath=''):
@@ -561,40 +555,40 @@ class GSM(object):
   def plot_sim(self, sim, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     self.interpolate_grid()
-    n_surf = 1000
+    n_surf = 100
     for n in range (self.n_metrics):
-        if self.n_dims == 1:
-            xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
-            fig = plt.figure()
-            plt.plot(self.org_x[0], 'k*')
-            for m in range (self.n_algs):
+        for m in range (self.n_algs):
+            if self.n_dims == 1:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                fig = plt.figure()
+                plt.plot(self.org_x[0], 'k*')
                 for t in range (len(xnew)):
                     arr = np.array([xnew[t]]).reshape(self.n_dims)
                     if self.interps[n][m](arr) > sim:
-                        plt.plot(self.x_vals[t], colors[m] + '.')
-            plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
-            if (mode == 'save'):
-                plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
-            else:
-                plt.show()                       
-        if self.n_dims == 2:
-            xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
-            ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
-            fig = plt.figure()
-            plt.plot(self.org_x[0], self.org_y[0], 'k*')
-            for m in range (self.n_algs):
+                        plt.plot(xnew[t], colors[m] + '.')
+                plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
+                else:
+                    plt.show()                       
+            if self.n_dims == 2:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+                fig = plt.figure()
+                plt.plot(self.org_x[0], self.org_y[0], 'k*')
                 for t in range (len(xnew)):
                     for u in range (len(ynew)):
+                        #print('m: %d t: %d u: %d' % (m, t, u))
                         arr = np.array([xnew[t], ynew[u]]).reshape(self.n_dims)
                         if self.interps[n][m](arr) > sim:
-                            plt.plot(self.x_vals[t], self.y_vals[u], colors[m] + '.')
-            plt.set_title(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot', fontsize=self.f_size)
-            if (mode == 'save'):
-                plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
-            else:
-                plt.show()           
-        if self.n_dims == 3:
-            print('Similarity plot in 3D too difficult to show')
+                            plt.plot(xnew[t], ynew[u], colors[m] + '.')
+                plt.title(self.metric_names[n] + ' similarity of ' + str(sim) + 'for ' + self.alg_names[m] + ' Plot', fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot.png')
+                else:
+                    plt.show()           
+            if self.n_dims == 3:
+                print('Similarity plot in 3D too difficult to show')
     plt.close('all')
     
 
@@ -679,7 +673,8 @@ def main3():
     my_gsm.get_plots_at_point2(2, 1)
     
 def main():
-    shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    shape_names = ['Straight_Ribbon']
     for i in range (len(shape_names)):
             print(shape_names[i])
             filename = '../h5 files/' + shape_names[i] +'_drawing_demo.h5'
@@ -711,13 +706,15 @@ def main():
             my_gsm.calc_metrics(d_sample=True)
             #my_gsm.save_results(plt_fpath + 'deform_data.h5')
             #my_gsm.plot_gradients(mode='show', filepath=plt_fpath)
-            my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
+            #my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
             #my_gsm.plot_strongest_gradients(mode='show', filepath=plt_fpath)
-            my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
+            #my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
             #my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
-            my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
-            #my_gsm.get_plots_at_point2(0, 1)
-            #my_gsm.get_plots_at_point2(2, 1)
+            #my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
+            my_gsm.plot_sim(sim=0.9, mode='show')
+            my_gsm.get_plots_at_point2(0, 2, mode='show')
+            my_gsm.get_plots_at_point2(5, 0, mode='show')
+            my_gsm.get_plots_at_point2(6, 7, mode='show')
      
 if __name__ == '__main__':
   main()
