@@ -17,6 +17,7 @@ from scipy.interpolate import interp2d
 import gradient_plotting
 import os
 from scipy.interpolate import RegularGridInterpolator
+import seaborn as sns; sns.set()
 
 class point(object):
   def __init__(self, given_x=None, given_y=None, given_z=None):
@@ -106,7 +107,7 @@ class GSM(object):
     self.is_dissims.append(is_dissim)
     
   def create_grid(self, given_grid_size, dists, disp=False):
-    if (self.org_x == []):
+    if (np.size(self.org_x) == 0):
         print('WARNING: No trajectories given')
     self.grid_size = given_grid_size
     if (self.n_dims >= 1):
@@ -342,7 +343,9 @@ class GSM(object):
     fp = h5py.File(filename, 'r')
     dset_name = 'GSM'
     dset = fp.get(dset_name)
-    self.grid_size = dset.get('grid_sz')
+    gs = dset.get('grid_sz')
+    gs = np.array(gs)
+    self.create_grid(gs, [0, 0, 0])
     for m in range (self.n_algs):
         alg_name = self.alg_names[m]
         alg = dset.get(alg_name)
@@ -365,7 +368,7 @@ class GSM(object):
                     if (j == 0):
                         self.x_vals[i] = self.grid_deforms_x[i][j][m].traj[0]
                     if (i == 0):
-                        self.y_vals[j] = self.grid_deforms_y[i][j][m].traj[0]
+                        self.y_vals[self.grid_size - 1 - j] = self.grid_deforms_y[i][j][m].traj[0]
         if self.n_dims == 3:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
@@ -425,6 +428,21 @@ class GSM(object):
                     gradient_plotting.gradient_map_show(A, self.alg_names[m] + self.metric_names[n] + 'Gradient') 
     plt.close('all')
 
+  def plot_heatmap(self, mode='save', filepath=''):
+    for m in range (self.n_algs):
+        for n in range (self.n_metrics):
+            name = self.alg_names[m] + ' ' + self.metric_names[n] + ' Heatmap'
+            print(name)
+            A = self.get_array_of_sim_metrics(n, m)
+            ax = sns.heatmap(np.transpose(A), annot=False)
+            plt.xticks([])
+            plt.yticks([])
+            if (mode == 'save'):
+                plt.savefig(filepath + name + '.png')
+            else:            
+                plt.show() 
+            plt.close('all')
+
   def plot_strongest_gradients(self, mode='save', filepath=''):
     for n in range (self.n_metrics):
         if self.n_dims == 1:
@@ -437,7 +455,7 @@ class GSM(object):
                         max_m = m
                 A[i] = max_m
             B = self.convert_num_to_rgb(A)
-            im = plt.imshow(B, vmin=0, vmax=1)
+            im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
             plt.xticks([])
             plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
             if (mode == 'save'):
@@ -455,7 +473,7 @@ class GSM(object):
                             max_m = m
                     A[i][j] = max_m
             B = self.convert_num_to_rgb(A)
-            im = plt.imshow(B, vmin=0, vmax=1)
+            im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
             plt.xticks([])
             plt.yticks([])
             plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
@@ -523,6 +541,9 @@ class GSM(object):
             if (self.n_dims == 1):
                 alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
             if (self.n_dims == 2):
+                #print(self.x_vals)
+                #print(self.y_vals)
+                #print(self.get_array_of_sim_metrics(n, m))
                 alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
             if (self.n_dims == 3):
                 alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self.get_array_of_sim_metrics(n, m)))
@@ -597,13 +618,19 @@ class GSM(object):
     else:
         plt.show()   
   
-  def get_plots_at_point2(self, i, j, mode='save', filepath=''):
+  def get_plots_at_point2(self, i, j, alg=-1, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     fig = plt.figure()
     plt.plot(self.org_x, self.org_y, 'k')
+    plt.plot(self.org_x[0], self.org_y[0], 'k+', markersize=14)
+    plt.plot(self.org_x[self.traj_len - 1], self.org_y[self.traj_len - 1], 'ko', markersize=14)
     for n in range (self.n_algs):
-        plt.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n])
-    plt.title('Deformations at grid point (' + str(i) + ', ' + str(j) + ')', fontsize=self.f_size)
+        if (n == alg):
+            plt.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n], linewidth=5.0)
+        else:
+            plt.plot(self.grid_deforms_x[i][j][n].traj, self.grid_deforms_y[i][j][n].traj, colors[n])  
+        plt.plot(self.grid_deforms_x[i][j][n].traj[0], self.grid_deforms_y[i][j][n].traj[0], colors[n] + '+', markersize=14)
+    #plt.title('Deformations at grid point (' + str(i) + ', ' + str(j) + ')', fontsize=self.f_size)
     if (mode == 'save'):
         plt.savefig(filepath + 'Deformations at grid point (' + str(i) + ', ' + str(j) + ').png')
     else:
@@ -654,7 +681,7 @@ class GSM(object):
                         arr = np.array([xnew[t], ynew[u]]).reshape(self.n_dims)
                         if self.interps[n][m](arr) > sim:
                             plt.plot(xnew[t], ynew[u], colors[m] + '.')
-                name = self.metric_names[n] + ' similarity of ' + str(sim) + 'for ' + self.alg_names[m] + ' Plot'
+                name = self.metric_names[n] + ' similarity of ' + str(sim) + ' for ' + self.alg_names[m] + ' Plot'
                 print(name)
                 #plt.title(name, fontsize=self.f_size)
                 plt.plot(self.org_x[0], self.org_y[0], 'k*')
@@ -666,6 +693,54 @@ class GSM(object):
                     plt.show()           
             if self.n_dims == 3:
                 print('Similarity plot in 3D too difficult to show')
+    plt.close('all')
+    
+  def plot_sim_strongest(self, sim, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    self.interpolate_grid()
+    n_surf = 100
+    for n in range (self.n_metrics):
+        fig = plt.figure()
+        if self.n_dims == 1:
+            A = np.zeros((n_surf))
+        if self.n_dims == 2:
+            A = np.zeros((n_surf, n_surf))
+        if self.n_dims == 3:
+            A = np.zeros((n_surf, n_surf, n_surf))
+        for m in range (self.n_algs):
+            name = self.metric_names[n] + ' similarity of ' + str(sim) + 'for ' + self.alg_names[m] + ' Plot'
+            print(name)
+            if self.n_dims == 1:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                for t in range (len(xnew)):
+                    arr = np.array([xnew[t]]).reshape(self.n_dims)
+                    if self.interps[n][m](arr) > sim and self.interps[n][m](arr) > A[t]:
+                        A[t] = self.interps[n][m](arr)
+                        plt.plot(xnew[t], colors[m] + '.')
+                plt.plot(self.org_x[0], 'k+', markersize=20)
+                name = self.metric_names[n] + 'similarity of ' + str(sim) + ' Plot'
+                #plt.set_title(name, fontsize=self.f_size)
+                plt.xticks(self.x_vals)    
+            if self.n_dims == 2:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+                for t in range (len(xnew)):
+                    for u in range (len(ynew)):
+                        #print('m: %d t: %d u: %d' % (m, t, u))
+                        arr = np.array([xnew[t], ynew[u]]).reshape(self.n_dims)
+                        if self.interps[n][m](arr) > sim and self.interps[n][m](arr) > A[t][u]:
+                            A[t][u] = self.interps[n][m](arr)
+                            plt.plot(xnew[t], ynew[u], colors[m] + '.')
+                #plt.title(name, fontsize=self.f_size)
+                plt.plot(self.org_x[0], self.org_y[0], 'k+', markersize=20)
+                plt.xticks(self.x_vals)
+                plt.yticks(self.y_vals)
+            if self.n_dims == 3:
+                print('Similarity plot in 3D too difficult to show')
+        if (mode == 'save'):
+            plt.savefig(filepath + name + '.png')
+        else:
+            plt.show()           
     plt.close('all')
     
 
@@ -797,43 +872,51 @@ def main():
     #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
     name = 'Straight_Ribbon'
     filename = '../h5 files/' + name +'_drawing_demo.h5'
+    plt_fpath = 'project_data/'
     hf = h5py.File(filename, 'r')
     demo = hf.get(name)
     x_data = demo.get('x')
     x_data = np.array(x_data)
-    x_data = downsample_1d(x_data)
+    #x_data = downsample_1d(x_data)
     y_data = demo.get('y')
     y_data = np.array(y_data)
-    y_data = downsample_1d(y_data)
+    #y_data = downsample_1d(y_data)
     hf.close()
-    my_gsm = GSM()
-    my_gsm.add_traj_dimension(x_data, 'x')
-    my_gsm.add_traj_dimension(y_data, 'y')
-    my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
-    my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
-    my_gsm.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
-    my_gsm.add_sim_metric(my_fd2, name='Frechet', is_dissim=True)
-    my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_dissim=True)
+    fig = plt.figure()
+    plt.plot(x_data, y_data, 'k')
+    plt.plot(x_data[0], y_data[0], 'k+', markersize=14)
+    plt.plot(x_data[len(x_data) - 1], y_data[len(y_data) - 1], 'ko', markersize=14)
+    plt.show()
+    #my_gsm = GSM()
+    #my_gsm.add_traj_dimension(x_data, 'x')
+    #my_gsm.add_traj_dimension(y_data, 'y')
+    #my_gsm.add_deform_alg(ja.perform_ja_improved, 'JA')
+    #my_gsm.add_deform_alg(lte.perform_lte_improved, 'LTE')
+    #my_gsm.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+    #my_gsm.add_sim_metric(my_fd2, name='Frechet', is_dissim=True)
+    #my_gsm.add_sim_metric(my_hd2, name='Haussdorf', is_dissim=True)
     #my_gsm.add_traj_dimension(x_data, 'z')
-    my_gsm.create_grid(10, [20, 20])
+    #my_gsm.create_grid(10, [20, 20])
     #my_gsm.create_grid(5, [20, 20])
-    my_gsm.deform_traj(plot=False)
-    my_gsm.calc_metrics(d_sample=False)
-    my_gsm.save_results('straight_ribbon_deform_data_ds.h5')
-    #my_gsm.read_from_h5('straight_ribbon_deform_data.h5')
-    my_gsm.plot_gradients(mode='show')
+    #my_gsm.deform_traj(plot=False)
+    #my_gsm.calc_metrics(d_sample=True)
+    #my_gsm.save_results('straight_ribbon_deform_data_full.h5')
+    #my_gsm.read_from_h5('straight_ribbon_deform_data_full.h5')
+    #my_gsm.plot_heatmap(mode='show')
+    #my_gsm.plot_heatmap(mode='save', filepath=plt_fpath)
+    #my_gsm.plot_gradients(mode='show')
     #my_gsm.plot_gradients(mode='save', filepath=plt_fpath)
-    my_gsm.plot_strongest_gradients(mode='show')
+    #my_gsm.plot_strongest_gradients(mode='show')
     #my_gsm.plot_strongest_gradients(mode='save', filepath=plt_fpath)
     #my_gsm.plot_surfaces(mode='show', filepath=plt_fpath)
     #my_gsm.plot_surfaces(mode='save', filepath=plt_fpath)
     #print(my_gsm.get_array_of_sim_metrics(0, 0))
     #print('input:')
     #a = float(input())
-    #my_gsm.plot_sim(sim=a, mode='show')
-    #my_gsm.get_plots_at_point2(0, 2, mode='show')
-    #my_gsm.get_plots_at_point2(5, 0, mode='show')
-    #my_gsm.get_plots_at_point2(6, 7, mode='show')
+    #my_gsm.plot_sim_strongest(sim=0.72, mode='show')
+    #my_gsm.get_plots_at_point2(0, 2, alg=0, mode='show')
+    #my_gsm.get_plots_at_point2(5, 0, alg=2, mode='show')
+    #my_gsm.get_plots_at_point2(6, 7, alg=1, mode='show')
      
 if __name__ == '__main__':
   main()
