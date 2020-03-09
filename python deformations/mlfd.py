@@ -1010,7 +1010,7 @@ def main4():
             #my_mlfd.get_plots_at_point2(5, 0, mode='show')
             #my_mlfd.get_plots_at_point2(6, 7, mode='show')
             
-def main():
+def main5():
     #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
     name = 'Straight_Ribbon'
     filename = '../h5 files/' + name +'_drawing_demo.h5'
@@ -1060,6 +1060,50 @@ def main():
     my_mlfd.get_plots_at_point2(7, 7, alg=0, mode='show')
     #my_mlfd.get_plots_at_point2(5, 0, alg=2, mode='show')
     #my_mlfd.get_plots_at_point2(6, 7, alg=1, mode='show')
+    
+def main():
+    #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
+    shape_names = ['Pi', 'Spiral']
+    for i in range (len(shape_names)):
+            print(shape_names[i])
+            filename = '../h5 files/' + shape_names[i] +'_drawing_demo.h5'
+            hf = h5py.File(filename, 'r')
+            demo = hf.get(shape_names[i])
+            x_data = demo.get('x')
+            x_data = np.array(x_data)
+            y_data = demo.get('y')
+            y_data = np.array(y_data)
+            hf.close()
+            plt_fpath = '../pictures/lte_writing/mlfd/' + shape_names[i] + '/'
+            try:
+                os.makedirs(plt_fpath)
+            except OSError:
+                print ("Creation of the directory %s failed" % plt_fpath)
+            else:
+                print ("Successfully created the directory %s" % plt_fpath)
+            my_mlfd = mlfd()
+            my_mlfd.add_traj_dimension(x_data, 'x')
+            my_mlfd.add_traj_dimension(y_data, 'y')
+            my_mlfd.add_deform_alg(ja.perform_ja_improved, 'JA')
+            my_mlfd.add_deform_alg(lte.perform_lte_improved, 'LTE')
+            my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+            my_mlfd.add_sim_metric(my_fd2, name='Frechet', is_dissim=True)
+            my_mlfd.add_sim_metric(my_hd2, name='Haussdorf', is_dissim=True)
+            #my_mlfd.add_traj_dimension(x_data, 'z')
+            my_mlfd.create_grid(10, [20, 20])
+            my_mlfd.deform_traj(plot=True)
+            my_mlfd.calc_metrics(d_sample=True)
+            my_mlfd.save_results(plt_fpath + 'mlfd_data.h5')
+            #my_mlfd.plot_gradients(mode='show', filepath=plt_fpath)
+            #my_mlfd.plot_gradients(mode='save', filepath=plt_fpath)
+            #my_mlfd.plot_strongest_gradients(mode='show', filepath=plt_fpath)
+            #my_mlfd.plot_strongest_gradients(mode='save', filepath=plt_fpath)
+            #my_mlfd.plot_surfaces(mode='show', filepath=plt_fpath)
+            #my_mlfd.plot_surfaces(mode='save', filepath=plt_fpath)
+            #my_mlfd.plot_sim(sim=0.9, mode='show')
+            #my_mlfd.get_plots_at_point2(0, 2, mode='show')
+            #my_mlfd.get_plots_at_point2(5, 0, mode='show')
+            #my_mlfd.get_plots_at_point2(6, 7, mode='show')
      
 if __name__ == '__main__':
   main()
