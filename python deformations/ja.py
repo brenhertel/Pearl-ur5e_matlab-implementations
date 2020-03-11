@@ -140,9 +140,9 @@ def perform_ja(traj, given_points=[], l=8.0):
 
 def perform_ja_improved(traj, initial=[], end=[], lmbda=-1.0):
   #set up endpoints if none specified
-  if not initial:
+  if initial == []:
     initial = traj[0]
-  if not end:
+  if end == []:
     end = traj[max(np.shape(traj)) - 1]
   #transpose if necessary
   if len(np.shape(traj)) > 1:

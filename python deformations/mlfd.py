@@ -1063,7 +1063,8 @@ def main5():
     
 def main():
     #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
-    shape_names = ['Pi', 'Spiral']
+    #shape_names = ['Pi', 'Spiral']
+    shape_names = ['Spiral']
     for i in range (len(shape_names)):
             print(shape_names[i])
             filename = '../h5 files/' + shape_names[i] +'_drawing_demo.h5'
