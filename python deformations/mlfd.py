@@ -293,6 +293,7 @@ class mlfd(object):
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
                     for k in range (self.grid_size):
+                        print('i: %d, j: %d, k: %d, n: %d' % (i, j, k, n))
                         self.grid_deforms_x[i][j][k][n].traj = self.algs[n](self.org_x, self.grid[i][j][k].x)
                         self.grid_deforms_y[i][j][k][n].traj = self.algs[n](self.org_y, self.grid[i][j][k].y)
                         self.grid_deforms_z[i][j][k][n].traj = self.algs[n](self.org_z, self.grid[i][j][k].z)
@@ -919,6 +920,17 @@ def my_hd2(x1, x2, y1, y2):
     comp_traj[:, 1] = np.transpose(y2)
     return max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
     
+def my_hd3(x1, x2, y1, y2, z1, z2):
+    org_traj = np.zeros((len(x1), 3))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1)
+    org_traj[:, 1] = np.transpose(y1)
+    org_traj[:, 2] = np.transpose(z1)
+    comp_traj[:, 0] = np.transpose(x2)
+    comp_traj[:, 1] = np.transpose(y2)
+    comp_traj[:, 2] = np.transpose(z2)
+    return max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
+    
 def my_fd2(x1, x2, y1, y2):
     org_traj = np.zeros((len(x1), 2))
     comp_traj = np.zeros((np.shape(org_traj)))
@@ -926,6 +938,17 @@ def my_fd2(x1, x2, y1, y2):
     org_traj[:, 1] = np.transpose(y1)
     comp_traj[:, 0] = np.transpose(x2)
     comp_traj[:, 1] = np.transpose(y2)
+    return similaritymeasures.frechet_dist(org_traj, comp_traj)
+
+def my_fd3(x1, x2, y1, y2, z1, z2):
+    org_traj = np.zeros((len(x1), 3))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1)
+    org_traj[:, 1] = np.transpose(y1)
+    org_traj[:, 2] = np.transpose(z1)
+    comp_traj[:, 0] = np.transpose(x2)
+    comp_traj[:, 1] = np.transpose(y2)
+    comp_traj[:, 2] = np.transpose(z2)
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
 def main3():
