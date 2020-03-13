@@ -294,9 +294,11 @@ class mlfd(object):
                 for j in range (self.grid_size):
                     for k in range (self.grid_size):
                         print('i: %d, j: %d, k: %d, n: %d' % (i, j, k, n))
+                        #print(self.org_x)
                         self.grid_deforms_x[i][j][k][n].traj = self.algs[n](self.org_x, self.grid[i][j][k].x)
                         self.grid_deforms_y[i][j][k][n].traj = self.algs[n](self.org_y, self.grid[i][j][k].y)
                         self.grid_deforms_z[i][j][k][n].traj = self.algs[n](self.org_z, self.grid[i][j][k].z)
+                        #print(self.grid_deforms_x[i][j][k][n].traj)
                         if plot == True:
                             print('Plotting a grid of 3D plots is too hard!')
     plt.show()
@@ -424,6 +426,7 @@ class mlfd(object):
                 for i in range (self.grid_size):
                     for j in range (self.grid_size):
                         for k in range (self.grid_size):
+                            #print(self.grid_deforms_x[i][j][k][m].traj)
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/x', data=self.grid_deforms_x[i][j][k][m].traj)
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/y', data=self.grid_deforms_y[i][j][k][m].traj)
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/z', data=self.grid_deforms_z[i][j][k][m].traj)
@@ -468,19 +471,21 @@ class mlfd(object):
                 for j in range (self.grid_size):
                     for k in range (self.grid_size):
                         deform_name = '(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')'
+                        print(deform_name)
                         deform = alg.get(deform_name)
                         x = deform.get('x')
                         self.grid_deforms_x[i][j][k][m].traj = np.array(x)
-                        x = deform.get('y')
+                        y = deform.get('y')
                         self.grid_deforms_y[i][j][k][m].traj = np.array(y)
                         z = deform.get('z')
-                        self.grid_deforms_y[i][j][k][m].traj = np.array(z)
+                        self.grid_deforms_z[i][j][k][m].traj = np.array(z)
+                        #print(self.grid_deforms_z[i][j][k][m].traj)
                         if (j == 0 and k == 0):
                             self.x_vals[i] = self.grid_deforms_x[i][j][k][m].traj[0]
                         if (i == 0 and k == 0):
-                            self.y_vals[j] = self.grid_deforms_y[i][j][k][m].traj[0]
+                            self.y_vals[self.grid_size - 1 - j] = self.grid_deforms_y[i][j][k][m].traj[0]
                         if (i == 0 and j == 0):
-                            self.y_vals[k] = self.grid_deforms_z[i][j][k][m].traj[0]
+                            self.z_vals[k] = self.grid_deforms_z[i][j][k][m].traj[0]
         for n in range (self.n_metrics):
             metric_name = self.metric_names[n]
             metric = alg.get(metric_name)
@@ -678,8 +683,85 @@ class mlfd(object):
                     plt.savefig(filepath + self.alg_names[m] + '_' + self.metric_names[n] + '_Surface.png')
                 else:
                     plt.show()           
+    if self.n_dims == 3:
+        self._plot_xy_surf(mode, filepath)
+        self._plot_xz_surf(mode, filepath)
+        self._plot_yz_surf(mode, filepath)
+    plt.close('all')
+    
+  def _plot_xy_surf(self, mode='save', filepath=''):
+    self._interpolate_grid()
+    n_surf = 100
+    for n in range (self.n_metrics):
+        for m in range (self.n_algs):  
             if self.n_dims == 3:
-                print('Surface in 3D too difficult to show')
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+                X, Y = np.meshgrid(xnew, ynew)
+                plt_new = np.zeros((len(xnew), len(ynew)))
+                for t in range (len(xnew)):
+                    for u in range (len(ynew)):
+                        arr = np.array([xnew[t], ynew[u], self.org_z[0]]).reshape(self.n_dims)
+                        plt_new[t][u] = self.interps[n][m](arr)
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(X, Y, plt_new, cmap='viridis', edgecolor='none')
+                name = self.alg_names[m] + ' ' + self.metric_names[n] + ' XY Surface'
+                ax.set_title(name, fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(filepath + name + '.png')
+                else:
+                    plt.show()
+    plt.close('all')
+    
+  def _plot_xz_surf(self, mode='save', filepath=''):
+    self._interpolate_grid()
+    n_surf = 100
+    for n in range (self.n_metrics):
+        for m in range (self.n_algs):  
+            if self.n_dims == 3:
+                xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+                znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+                X, Z = np.meshgrid(xnew, znew)
+                plt_new = np.zeros((len(xnew), len(znew)))
+                for t in range (len(xnew)):
+                    for u in range (len(znew)):
+                        arr = np.array([xnew[t], self.org_y[0], znew[u]]).reshape(self.n_dims)
+                        plt_new[t][u] = self.interps[n][m](arr)
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(X, Z, plt_new, cmap='viridis', edgecolor='none')
+                name = self.alg_names[m] + ' ' + self.metric_names[n] + ' XZ Surface'
+                ax.set_title(name, fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(filepath + name + '.png')
+                else:
+                    plt.show()
+    plt.close('all')
+    
+  def _plot_yz_surf(self, mode='save', filepath=''):
+    self._interpolate_grid()
+    n_surf = 100
+    for n in range (self.n_metrics):
+        for m in range (self.n_algs):  
+            if self.n_dims == 3:
+                ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+                znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+                Y, Z = np.meshgrid(ynew, znew)
+                plt_new = np.zeros((len(ynew), len(znew)))
+                for t in range (len(ynew)):
+                    for u in range (len(znew)):
+                        arr = np.array([self.org_x[0], ynew[t], znew[u]]).reshape(self.n_dims)
+                        plt_new[t][u] = self.interps[n][m](arr)
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.plot_surface(Y, Z, plt_new, cmap='viridis', edgecolor='none')
+                name = self.alg_names[m] + ' ' + self.metric_names[n] + ' YZ Surface'
+                ax.set_title(name, fontsize=self.f_size)
+                if (mode == 'save'):
+                    plt.savefig(filepath + name + '.png')
+                else:
+                    plt.show()
     plt.close('all')
     
   def _get_array_of_sim_metrics(self, metric_num, alg_num):

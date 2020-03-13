@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 #to be called from another file
 #uses code in the pydmps folder
 def perform_dmp(traj, given_points=0, alpha_y=None, beta_y=None):
-  dmp = pydmps.dmp_discrete.DMPs_discrete(n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y, dt=0.01)
+  my_dt = 1.0 / max(np.shape(traj))
+  dmp = pydmps.dmp_discrete.DMPs_discrete(n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y, dt=my_dt)
   y_track = []
   dy_track = []
   ddy_track = []
@@ -37,7 +38,7 @@ def perform_dmp_improved(traj, initial=[], end=[]):
   ## DMP ##
   dmp_traj = perform_dmp(ntraj, [initial, end])
   dmp_traj = np.reshape(dmp_traj, np.shape(traj))
-  return dmp_traj[0]
+  return dmp_traj
 
 #in-file testing
 def main():

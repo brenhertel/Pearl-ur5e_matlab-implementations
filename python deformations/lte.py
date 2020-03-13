@@ -112,7 +112,7 @@ def perform_lte_improved(traj, initial=[], end=[]):
   lte_traj = perform_lte(ntraj, lte_fixed_points)
   lte_traj = np.reshape(lte_traj, np.shape(traj))
   #print(lte_traj)
-  return lte_traj[0]
+  return lte_traj
 
 #in-file testing
 def main():
