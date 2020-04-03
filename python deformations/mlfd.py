@@ -19,6 +19,7 @@ from sklearn.neighbors import KDTree
 import os
 from scipy.interpolate import RegularGridInterpolator
 import seaborn as sns; sns.set()
+from sklearn.svm import SVC
 
 ### TO-DO ###
 #add weights to similarity metrics
@@ -143,6 +144,7 @@ class mlfd(object):
     self.is_dissims = []
     self.metric_weights = []
     self.metric_weights_norm = []
+    self.metric_types = []
     self.f_size = 32
     
   #add a peice of the trajectory to the object to store (added one dimension at a time, call multiple times to add multiple dimensions)
@@ -198,23 +200,48 @@ class mlfd(object):
   #name: string that denotes the name of the similarity metric
   #is_dissim (optional): if the algorithm is a measure of dissimilarity instead of similarity, set is_dissim to True
   #returns nothing
-  def add_sim_metric(self, metric, name='', weight=1.0, is_dissim=False):
-    self.metrics.append(metric)
-    self.metric_names.append(name)
-    self.n_metrics = self.n_metrics + 1
-    self.is_dissims.append(is_dissim)
-    self.metric_weights.append(weight)
-    self.metric_weights_norm = np.array(self.metric_weights) #I use this so weights_norm is the same shape while not pointing to the same reference
-    sum = 0.0
-    for n in range (self.n_metrics):
-        sum = sum + self.metric_weights[n]
-    for n in range (self.n_metrics):
-        self.metric_weights_norm[n] = self.metric_weights[n] / sum
-        if self.is_dissims[n]:
-            self.metric_weights_norm[n] = -self.metric_weights_norm[n]
-            #this is a temporary solution in order to combine dissimilarity metrics and similarity metrics
+  #def add_sim_metric(self, metric, name='', weight=1.0, is_dissim=False):
+  #  self.metrics.append(metric)
+  #  self.metric_names.append(name)
+  #  self.n_metrics = self.n_metrics + 1
+  #  self.is_dissims.append(is_dissim)
+  #  self.metric_weights.append(weight)
+  #  self.metric_weights_norm = np.array(self.metric_weights) #I use this so weights_norm is the same shape while not pointing to the same reference
+  #  sum = 0.0
+  #  for n in range (self.n_metrics):
+  #      sum = sum + self.metric_weights[n]
+  #  for n in range (self.n_metrics):
+  #      self.metric_weights_norm[n] = self.metric_weights[n] / sum
+  #      if self.is_dissims[n]:
+  #          self.metric_weights_norm[n] = -self.metric_weights_norm[n]
+  #          #this is a temporary solution in order to combine dissimilarity metrics and similarity metrics
        
-      
+  def add_metric(self, metric, type='none', name='none', weight=1.0, is_dissim=False):
+    if type in self.metric_types:
+        print('Metric type already exists, given metric not added')
+        return
+    else:
+        self.metrics.append(metric)
+        self.metric_names.append(name)
+        self.n_metrics = self.n_metrics + 1
+        self.metric_weights.append(weight)
+        self.metric_types.append(type)
+        self.is_dissims.append(is_dissim)
+        self.metric_weights_norm = np.array(self.metric_weights) #I use this so weights_norm is the same shape while not pointing to the same reference
+        sum = 0.0
+        for n in range (self.n_metrics):
+            sum = sum + self.metric_weights[n]
+        for n in range (self.n_metrics):
+            self.metric_weights_norm[n] = self.metric_weights[n] / sum
+    
+  def use_default_metrics(self):
+    if self.n_dims == 1:
+        print('1D metrics not implemented yet!')
+    if self.n_dims == 2:
+        self.add_metric(my_fd2, type='geometry', name='Frechet', weight=1.0, is_dissim=True)
+    if self.n_dims == 3:
+        self.add_metric(my_fd3, type='geometry', name='Frechet', weight=1.0, is_dissim=True)
+    
   #Create the grid for which mlfd tests the generalization of the algorithms given against the metrics given
   #mlfd.create_grid(10, [20, 20, 20])
   #arguments
@@ -311,6 +338,7 @@ class mlfd(object):
         #self.grid_x = np.meshgrid(x_vals)
         self.grid_deforms_x = [[traj() for m in range (self.n_algs)] for i in range (self.grid_size)]
         self.grid_similarities = [[val() for m in range (self.n_algs)]  for i in range (self.grid_size)]
+        self.grid_similarities_ind = [[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)]
         for i in range (self.grid_size):
             self.grid[i].x = self.x_vals[i]
         if (disp == True):
@@ -322,6 +350,7 @@ class mlfd(object):
         self.grid_deforms_x = [[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_deforms_y = [[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities = [[[val() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
+        self.grid_similarities_ind = [[[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 self.grid[j][i].x = self.x_vals[j]
@@ -337,6 +366,7 @@ class mlfd(object):
         self.grid_deforms_y = [[[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
         self.grid_deforms_z = [[[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)] 
         self.grid_similarities = [[[[val() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)] 
+        self.grid_similarities_ind = [[[[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)] 
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 for k in range (self.grid_size):
@@ -496,7 +526,7 @@ class mlfd(object):
     #print(A)
     #gradient_plotting.gradient_map_show(A, 'test', 0, 1)
   
-  def calc_metrics(self, d_sample=True, n_dsample=100):
+  def calc_metrics_deprecated(self, d_sample=True, n_dsample=100):
     #A = np.zeros((self.grid_size, self.grid_size))
     metric_max = None
     metric_min = None
@@ -590,6 +620,116 @@ class mlfd(object):
     #print(A)
     #gradient_plotting.gradient_map_show(A, 'test', 0, 1)
   
+  def calc_metrics(self, d_sample=True, n_dsample=100):
+    for n in range (self.n_metrics):
+        metric_max = None
+        metric_min = None
+        for m in range (self.n_algs):
+            if d_sample == True:
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][m].traj, n_dsample))
+                        if (metric_max == None or self.grid_similarities_ind[i][n][m].val > metric_max):
+                            metric_max = self.grid_similarities_ind[i][n][m].val
+                        if (metric_min == None or self.grid_similarities_ind[i][n][m].val < metric_min):
+                            metric_min = self.grid_similarities_ind[i][n][m].val
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][m].traj, n_dsample))
+                            if (metric_max == None or self.grid_similarities_ind[i][j][n][m].val > metric_max):
+                                metric_max = self.grid_similarities_ind[i][j][n][m].val
+                            if (metric_min == None or self.grid_similarities_ind[i][j][n][m].val < metric_min):
+                                metric_min = self.grid_similarities_ind[i][j][n][m].val
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][k][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][k][m].traj, n_dsample), downsample_1d(self.org_z, n_dsample), downsample_1d(self.grid_deforms_z[i][j][k][m].traj, n_dsample))
+                                if (metric_max == None or self.grid_similarities_ind[i][j][k][n][m].val > metric_max):
+                                    metric_max = self.grid_similarities_ind[i][j][k][n][m].val
+                                if (metric_min == None or self.grid_similarities_ind[i][j][k][n][m].val < metric_min):
+                                    metric_min = self.grid_similarities_ind[i][j][k][n][m].val
+            else:
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][m].traj)
+                        if (metric_max == None or self.grid_similarities_ind[i][n][m].val > metric_max):
+                            metric_max = self.grid_similarities_ind[i][n][m].val
+                        if (metric_min == None or self.grid_similarities_ind[i][n][m].val < metric_min):
+                            metric_min = self.grid_similarities_ind[i][n][m].val
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][j][m].traj, self.org_y, self.grid_deforms_y[i][j][m].traj)
+                            print(self.grid_similarities_ind[i][j][n][m].val)
+                            if (metric_max == None or self.grid_similarities_ind[i][j][n][m].val > metric_max):
+                                metric_max = self.grid_similarities_ind[i][j][n][m].val
+                            if (metric_min == None or self.grid_similarities_ind[i][j][n][m].val < metric_min):
+                                metric_min = self.grid_similarities_ind[i][j][n][m].val
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][j][k][m].traj, self.org_y, self.grid_deforms_y[i][j][k][m].traj, self.org_z, self.grid_deforms_z[i][j][k][m].traj)
+                                if (metric_max == None or self.grid_similarities_ind[i][j][k][n][m].val > metric_max):
+                                    metric_max = self.grid_similarities_ind[i][j][k][n][m].val
+                                if (metric_min == None or self.grid_similarities_ind[i][j][k][n][m].val < metric_min):
+                                    metric_min = self.grid_similarities_ind[i][j][k][n][m].val
+                                print(self.grid_similarities_ind[i][j][k][n][m].val)
+        if (self.is_dissims[n] == True):
+            for m in range (self.n_algs):
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities_ind[i][n][m].val = my_map(self.grid_similarities_ind[i][n][m].val, metric_min, metric_max, 1, 0)
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            self.grid_similarities_ind[i][j][n][m].val = my_map(self.grid_similarities_ind[i][j][n][m].val, metric_min, metric_max, 1, 0)
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities_ind[i][j][k][n][m].val = my_map(self.grid_similarities_ind[i][j][k][n][m].val, metric_min, metric_max, 1, 0)
+                if (m == 3):
+                    print(self._get_array_of_sim_metrics(n, m))
+        else:
+            for m in range (self.n_algs):
+                if self.n_dims == 1:
+                    for i in range (self.grid_size):
+                        self.grid_similarities_ind[i][n][m].val = my_map(self.grid_similarities_ind[i][n][m].val, metric_min, metric_max, 0, 1)
+                if self.n_dims == 2:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            self.grid_similarities_ind[i][j][n][m].val = my_map(self.grid_similarities_ind[i][j][n][m].val, metric_min, metric_max, 0, 1)
+                if self.n_dims == 3:
+                    for i in range (self.grid_size):
+                        for j in range (self.grid_size):
+                            for k in range (self.grid_size):
+                                self.grid_similarities_ind[i][j][k][n][m].val = my_map(self.grid_similarities_ind[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
+    for m in range (self.n_algs):
+        if self.n_dims == 1:
+            for i in range (self.grid_size):
+                sim_val = 0
+                for n in range (self.n_metrics):
+                    sim_val = sim_val + (self.metric_weights_norm[n] * self.grid_similarities_ind[i][n][m].val)
+                self.grid_similarities[i][m].val = sim_val
+        if self.n_dims == 2:
+            for i in range (self.grid_size):
+                for j in range (self.grid_size):
+                    sim_val = 0
+                    for n in range (self.n_metrics):
+                        sim_val = sim_val + (self.metric_weights_norm[n] * self.grid_similarities_ind[i][j][n][m].val)
+                    self.grid_similarities[i][j][m].val = sim_val
+        if self.n_dims == 3:
+            for i in range (self.grid_size):
+                for j in range (self.grid_size):
+                    for k in range (self.grid_size):
+                        sim_val = 0
+                        for n in range (self.n_metrics):
+                            sim_val = sim_val + (self.metric_weights_norm[n] * self.grid_similarities_ind[i][j][k][n][m].val)
+                        self.grid_similarities[i][j][k][m].val = sim_val
+  
   def save_results_old(self, filename='unspecified.h5'):
     fp = h5py.File(filename, 'w')
     dset_name = 'mlfd'
@@ -640,6 +780,7 @@ class mlfd(object):
                             fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/(' + str(i) + ', ' + str(j) + ', ' + str(k) + ')/z', data=self.grid_deforms_z[i][j][k][m].traj)
     for m in range (self.n_algs):
         A = self._get_array_of_sim_metrics(m)
+        print(A)
         fp.create_dataset(dset_name + '/' + self.alg_names[m] + '/weighted_similarities', data=A)
     fp.close()
     
@@ -738,9 +879,15 @@ class mlfd(object):
                     y = deform.get('y')
                     self.grid_deforms_y[i][j][m].traj = np.array(y)
                     if (j == 0):
-                        self.x_vals[i] = self.grid_deforms_x[i][j][m].traj[0]
+                        if len(np.shape(self.grid_deforms_x[i][j][m].traj)) > 1:
+                            self.x_vals[i] = self.grid_deforms_x[i][j][m].traj[0][0]
+                        else:
+                            self.x_vals[i] = self.grid_deforms_x[i][j][m].traj[0]
                     if (i == 0):
-                        self.y_vals[self.grid_size - 1 - j] = self.grid_deforms_y[i][j][m].traj[0]
+                        if len(np.shape(self.grid_deforms_y[i][j][m].traj)) > 1:
+                            self.y_vals[self.grid_size - 1 - j] = self.grid_deforms_y[i][j][m].traj[0][0]
+                        else:
+                            self.y_vals[self.grid_size - 1 - j] = self.grid_deforms_y[i][j][m].traj[0]
         if self.n_dims == 3:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
@@ -777,6 +924,7 @@ class mlfd(object):
                 for j in range (self.grid_size):
                     for k in range (self.grid_size):
                         self.grid_similarities[i][j][k][m].val = metric[i][j][k]
+                        print(self.grid_similarities[i][j][k][m].val)
     fp.close()
   
   def plot_gradients(self, mode='save', filepath=''):
@@ -899,44 +1047,76 @@ class mlfd(object):
     return A
     
   def _get_strongest_repro(self, threshold=0.0):
+    #for m in range (self.n_algs):
+    #    if self.n_dims == 1:
+    #        A = np.zeros((self.grid_size))
+    #        for i in range (self.grid_size):
+    #            max_s = threshold
+    #            max_m = -1
+    #            if (max_s < self.grid_similarities[i][m].val):
+    #                max_s = self.grid_similarities[i][m].val
+    #                max_m = m
+    #            A[i] = max_m                                
+    #    if self.n_dims == 2:
+    #        A = np.zeros((self.grid_size, self.grid_size))
+    #        for i in range (self.grid_size):
+    #            for j in range (self.grid_size):
+    #                max_s = threshold
+    #                max_m = -1
+    #                if (max_s < self.grid_similarities[i][j][m].val):
+    #                    max_s = self.grid_similarities[i][j][m].val
+    #                    max_m = m
+    #                A[i][j] = max_m
+    #    if self.n_dims == 3:
+    #        A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
+    #        for i in range (self.grid_size):
+    #            for j in range (self.grid_size):
+    #                for k in range (self.grid_size):
+    #                    max_s = threshold
+    #                    max_m = -1
+    #                    if (max_s < self.grid_similarities[i][j][k][m].val):
+    #                        max_s = self.grid_similarities[i][j][k][m].val
+    #                        max_m = m
+    #                    A[i][j][k] = max_m
+    #                #print(max_m)
+    #                #print(self.alg_names[max_m])
     if self.n_dims == 1:
         A = np.zeros((self.grid_size))
         for i in range (self.grid_size):
-            max_s = threshold
             max_m = -1
+            max_s = threshold
             for m in range (self.n_algs):
-                if (max_s < self.grid_similarities[i][m].val):
-                    max_s = self.grid_similarities[i][m].val
+                if (self.grid_similarities[i][m].val > max_s):
                     max_m = m
-            A[i] = max_m                                
+                    max_s = self.grid_similarities[i][m].val
+            A[i] = max_m
     if self.n_dims == 2:
         A = np.zeros((self.grid_size, self.grid_size))
         for i in range (self.grid_size):
             for j in range (self.grid_size):
-                max_s = threshold
                 max_m = -1
+                max_s = threshold
                 for m in range (self.n_algs):
-                    if (max_s < self.grid_similarities[i][j][m].val):
-                        max_s = self.grid_similarities[i][j][m].val
+                    if (self.grid_similarities[i][j][m].val > max_s):
                         max_m = m
+                        max_s = self.grid_similarities[i][j][m].val
                 A[i][j] = max_m
     if self.n_dims == 3:
         A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 for k in range (self.grid_size):
-                    max_s = threshold
                     max_m = -1
+                    max_s = threshold
                     for m in range (self.n_algs):
-                        if (max_s < self.grid_similarities[i][j][k][m].val):
-                            max_s = self.grid_similarities[i][j][k][m].val
+                        print(self.grid_similarities[i][j][k][m].val)
+                        if (self.grid_similarities[i][j][k][m].val > max_s):
                             max_m = m
+                            max_s = self.grid_similarities[i][j][k][m].val
                     A[i][j][k] = max_m
-                #print(max_m)
-                #print(self.alg_names[max_m])
     return A
     
-  def set_up_knn(self, threshold=0.0):
+  def set_up_classifier(self, threshold=0.0):
     print('NOTE: This function assumes similarities have been normalized, meaning that for every point there is 1 similarity value!')
     X = np.zeros((self.grid_size**self.n_dims, self.n_dims))
     Y = np.zeros((self.grid_size**self.n_dims))
@@ -961,10 +1141,15 @@ class mlfd(object):
                     X[(k * self.grid_size**2) + (j * self.grid_size) + (i)][1] = self.grid_deforms_y[i][j][k][0].traj[0]
                     X[(k * self.grid_size**2) + (j * self.grid_size) + (i)][2] = self.grid_deforms_z[i][j][k][0].traj[0]
                     Y[(k * self.grid_size**2) + (j * self.grid_size) + (i)] = A[i][j][k]
+                    print(X[(k * self.grid_size**2) + (j * self.grid_size) + (i)])
+                    print(Y[(k * self.grid_size**2) + (j * self.grid_size) + (i)])
     self.tree = KDTree(X)
     self.treeY = Y
+    self.X = X
+    self.clf = SVC()
+    self.clf.fit(X, Y)
   
-  def query_knn(self, coords, new_k=1):
+  def query_knn(self, coords, new_k=1, plot=False):
     dist, ind = self.tree.query(coords, k=new_k)
     res = np.zeros((self.n_algs + 1, 2))
     res[0][0] = -1
@@ -979,6 +1164,187 @@ class mlfd(object):
         print('No reproduction to fit threshold at given point')
     else:
         print('Optimal reproduction from: %s' % (self.alg_names[int(res[max_alg_ind][0])]))
+    self.reproduce_at_point(coords, plot=plot)
+            
+  def query_svm(self, coords, plot=False):
+    print(self.X)
+    print(coords)
+    if self.clf.predict(coords) < 0:
+        print('No reproduction to fit threshold at given point')
+    else:
+        print('Optimal Reproduction at point ' + np.array2string(coords) + ' from ' + self.alg_names[int(self.clf.predict(coords))])
+    self.reproduce_at_point(coords, plot=plot)
+  
+  def reproduce_at_point(self, coords, plot=False):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    if self.n_dims == 1:
+        self.current_deforms_x = [traj() for m in range (self.n_algs)]
+    if self.n_dims == 2:
+        self.current_deforms_x = [traj() for m in range (self.n_algs)]
+        self.current_deforms_y = [traj() for m in range (self.n_algs)]
+    if self.n_dims == 3:
+        self.current_deforms_x = [traj() for m in range (self.n_algs)]
+        self.current_deforms_y = [traj() for m in range (self.n_algs)]
+        self.current_deforms_z = [traj() for m in range (self.n_algs)]
+    if plot == True:
+        fig = plt.figure()
+        if self.n_dims == 2:
+                plt.plot(self.org_x, self.org_y, 'k', linewidth=6.0)
+        if self.n_dims == 3:
+            ax = fig.add_subplot(111, projection='3d')
+    if self.n_dims == 1:
+        for m in range (self.n_algs):
+            self.current_deforms_x[m].traj = self.algs[m](self.org_x, coords[0][0])
+            if plot == True:
+                plt.plot(self.current_deforms_x[m].traj, colors[m])
+                plt.plot(self.org_x, 'k', linewidth=6.0)
+                plt.xticks([])
+    if self.n_dims == 2:
+        for m in range (self.n_algs):
+            self.current_deforms_x[m].traj = self.algs[m](self.org_x, coords[0][0])
+            self.current_deforms_y[m].traj = self.algs[m](self.org_y, coords[0][1])
+            if plot == True:
+                #fig.hold(True)
+                #print(self.current_deforms_x[m].traj)
+                #print(self.current_deforms_y[m].traj)
+                if m == 0:
+                    plt.plot(self.current_deforms_x[m].traj, self.current_deforms_y[m].traj, colors[m])
+                else:
+                    plt.plot(self.current_deforms_x[m].traj[0], self.current_deforms_y[m].traj[0], colors[m])
+                #plt.plot(self.org_x, self.org_y, 'k')
+                #plt.show()
+    if self.n_dims == 3:
+        for m in range (self.n_algs):
+            #print(coords[0][0])
+            self.current_deforms_x[m].traj = self.algs[m](self.org_x, coords[0][0])
+            #print('received value')
+            #print(self.current_deforms_x[m].traj)
+            #input('Press "Enter" to continue')
+            self.current_deforms_y[m].traj = self.algs[m](self.org_y, coords[0][1])
+            self.current_deforms_z[m].traj = self.algs[m](self.org_z, coords[0][2])
+            if plot == True:
+                ax.plot(self.org_x, self.org_y, self.org_z, 'k', linewidth=6.0)
+                ax.plot(self.current_deforms_x[m].traj, self.current_deforms_y[m].traj, self.current_deforms_z[m].traj, colors[m])
+    cur_sim_vals = self.evaluate_repros()
+    for m in range (self.n_algs):
+        plt.figtext(0.7, 0.85 - (0.04 * m), self.alg_names[m] + ' raw similarity: ' + str(cur_sim_vals[m]), color=colors[m], wrap=True, fontsize='large')
+        #plt.figtext(1, 1, self.alg_names[m] + ' raw similarity: ' + str(cur_sim_vals[m]), color=colors[m], ha='right', va='top', wrap=True)
+    plt.show()
+    plt.close('all')
+  
+  def evaluate_repros(self):
+    cur_sim_vals = []
+    for m in range (self.n_algs):
+        if self.n_dims == 1:
+            sim_val = 0
+            for n in range (self.n_metrics):
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, ))
+            print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
+            cur_sim_vals.append(sim_val)
+        if self.n_dims == 2:
+            sim_val = 0
+            for n in range (self.n_metrics):
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, ))
+            print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
+            cur_sim_vals.append(sim_val)
+        if self.n_dims == 3:
+            sim_val = 0
+            for n in range (self.n_metrics):
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, self.org_z, self.current_deforms_z[m].traj, ))
+            print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
+            cur_sim_vals.append(sim_val)
+    return cur_sim_vals
+  
+  def generate_svm_region(self, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    n_surf = 100
+    name = 'SVM Similarity'
+    if self.n_dims == 1:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        fig = plt.figure()
+        for t in range (len(xnew)):
+            plt.plot(xnew[t], colors[int(self.clf.predict(np.array([[xnew[t]]])))] + '.')
+        plt.plot(self.org_x[0], 'k*')
+        plt.xticks(self.x_vals)                     
+    if self.n_dims == 2:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+        fig = plt.figure()
+        for t in range (len(xnew)):
+            for u in range (len(ynew)):
+                coords = np.array([[xnew[t][0], ynew[u][0]]])
+                #print(coords)
+                #print(self.clf.predict(coords))
+                plt.plot(xnew[t], ynew[u], colors[int(self.clf.predict(coords))] + '.')
+        plt.plot(self.org_x[0], self.org_y[0], 'k*')
+        plt.xticks(self.x_vals)
+        plt.yticks(self.y_vals)           
+    if self.n_dims == 3:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+        znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+        ax = plt.axes(projection='3d')
+        for t in range (len(xnew)):
+            for u in range (len(ynew)):
+                for v in range (len(znew)):
+                    ax.scatter(xnew[t], ynew[u], c=colors[int(self.clf.predict(np.array([[xnew[t], ynew[u], znew[v]]])))])
+        ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k')
+        ax.set_xticks(self.x_vals)
+        ax.set_yticks(self.y_vals)
+        ax.set_zticks(self.z_vals)
+    if (mode == 'save'):
+        plt.savefig(filepath + name + '.png')
+    else:
+        plt.show()
+    plt.close('all')
+  
+  def svm_region_contour(self, mode='save', filepath=''):
+    #colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    colors = ['r', 'g', 'b', 'c', 'm']
+    n_surf = 1000
+    name = 'SVM Similarity'
+    if self.n_dims == 1:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        fig = plt.figure()
+        for t in range (len(xnew)):
+            plt.plot(xnew[t], colors[int(self.clf.predict(np.array([[xnew[t]]])))] + '.')
+        plt.plot(self.org_x[0], 'k*')
+        plt.xticks(self.x_vals)                     
+    if self.n_dims == 2:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+        fig = plt.figure()
+        xx, yy = np.meshgrid(xnew, ynew)
+        Z = self.clf.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+        plt.contourf(xx, yy, Z, colors=colors, alpha=0.8)
+        #for t in range (len(xnew)):
+            #for u in range (len(ynew)):
+                #coords = np.array([[xnew[t][0], ynew[u][0]]])
+                #print(coords)
+                #print(self.clf.predict(coords))
+        #        plt.plot(xnew[t], ynew[u], colors[int(self.clf.predict(coords))] + '.')
+        plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
+        plt.xticks(self.x_vals)
+        plt.yticks(self.y_vals)           
+    if self.n_dims == 3:
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+        znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+        ax = plt.axes(projection='3d')
+        xx, yy, zz = np.meshgrid(xnew, ynew, znew)
+        Z = self.clf.predict(np.c_[xx.ravel(), yy.ravel(), zz.ravel()])
+        Z = Z.reshape(xx.shape)
+        ax.contourf(xx, yy, zz, Z, colors=colors, alpha=0.8)
+        ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k', markersize=30)
+        ax.set_xticks(self.x_vals)
+        ax.set_yticks(self.y_vals)
+        ax.set_zticks(self.z_vals)
+    if (mode == 'save'):
+        plt.savefig(filepath + name + '.png')
+    else:
+        plt.show()
+    plt.close('all')
   
   def _convert_num_to_rgb(self, A):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -1451,10 +1817,10 @@ def my_hd3(x1, x2, y1, y2, z1, z2):
 def my_fd2(x1, x2, y1, y2):
     org_traj = np.zeros((len(x1), 2))
     comp_traj = np.zeros((np.shape(org_traj)))
-    org_traj[:, 0] = np.transpose(x1)
-    org_traj[:, 1] = np.transpose(y1)
-    comp_traj[:, 0] = np.transpose(x2)
-    comp_traj[:, 1] = np.transpose(y2)
+    org_traj[:, 0] = np.transpose(x1).reshape((1000))
+    org_traj[:, 1] = np.transpose(y1).reshape((1000))
+    comp_traj[:, 0] = np.transpose(x2).reshape((1000))
+    comp_traj[:, 1] = np.transpose(y2).reshape((1000))
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
 def my_fd3(x1, x2, y1, y2, z1, z2):
@@ -1601,7 +1967,7 @@ def main5():
     #my_mlfd.get_plots_at_point2(5, 0, alg=2, mode='show')
     #my_mlfd.get_plots_at_point2(6, 7, alg=1, mode='show')
     
-def main():
+def main6():
     #shape_names = ['Circle', 'Infinity', 'Pi', 'Pyramids', 'Ribbon', 'Slanted_Square', 'Spiral', 'Straight_Ribbon', 'Three', 'Worm']
     #shape_names = ['Pi', 'Spiral']
     shape_names = ['Spiral']
@@ -1645,6 +2011,41 @@ def main():
             #my_mlfd.get_plots_at_point2(0, 2, mode='show')
             #my_mlfd.get_plots_at_point2(5, 0, mode='show')
             #my_mlfd.get_plots_at_point2(6, 7, mode='show')
-     
+    
+def main():
+    shape_names = 'Spiral'
+    filename = '../h5 files/' + shape_names +'_drawing_demo.h5'
+    hf = h5py.File(filename, 'r')
+    demo = hf.get(shape_names)
+    x_data = demo.get('x')
+    x_data = np.array(x_data)
+    y_data = demo.get('y')
+    y_data = np.array(y_data)
+    hf.close()
+    plt_fpath = '../pictures/lte_writing/mlfd/' + shape_names + '/'
+    try:
+        os.makedirs(plt_fpath)
+    except OSError:
+        print ("Creation of the directory %s failed" % plt_fpath)
+    else:
+        print ("Successfully created the directory %s" % plt_fpath)
+    my_mlfd = mlfd()
+    my_mlfd.add_traj_dimension(x_data, 'x')
+    my_mlfd.add_traj_dimension(y_data, 'y')
+    my_mlfd.add_deform_alg(ja.perform_ja_improved, 'JA')
+    my_mlfd.add_deform_alg(lte.perform_lte_improved, 'LTE')
+    my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+    my_mlfd.use_default_metrics()
+    #my_mlfd.create_grid(9, [20, 20])
+    #my_mlfd.deform_traj(plot=False)
+    #my_mlfd.calc_metrics(d_sample=False)
+    #my_mlfd.save_results('spiral_2d_svm_testing.h5')
+    my_mlfd.read_from_h5('spiral_2d_svm_testing.h5')
+    my_mlfd.set_up_classifier()
+    #e = 10
+    #my_mlfd.query_svm(np.array([[x_data[0][0] - e, y_data[0][0] + e]]), plot=True)
+    my_mlfd.svm_region_contour(mode='show')
+    
+    
 if __name__ == '__main__':
   main()

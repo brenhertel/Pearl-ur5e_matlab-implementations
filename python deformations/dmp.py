@@ -19,9 +19,9 @@ def perform_dmp(traj, given_points=0, alpha_y=None, beta_y=None):
   if given_points != 0:
     dmp.y0[0] = given_points[0]
     dmp.goal[0] = given_points[1]
-  print('Start: %f, end: %f' % (dmp.y0[0], dmp.goal[0]))
+  #print('Start: %f, end: %f' % (dmp.y0[0], dmp.goal[0]))
   y_track, dy_track, ddy_track = dmp.rollout()
-  print('Start: %f, end: %f' % (y_track[0], y_track[len(y_track) - 1]))
+  #print('Start: %f, end: %f' % (y_track[0], y_track[len(y_track) - 1]))
   return y_track
 
 def perform_dmp_improved(traj, initial=[], end=[]):
