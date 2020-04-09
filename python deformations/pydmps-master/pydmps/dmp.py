@@ -24,7 +24,7 @@ class DMPs(object):
     as described in Dr. Stefan Schaal's (2002) paper."""
 
     def __init__(
-        self, n_dmps, n_bfs, dt=0.01, y0=0, goal=1, w=None, ay=None, by=None, **kwargs
+        self, n_dmps, n_bfs, dt=0.001, y0=0, goal=1, w=None, ay=None, by=None, **kwargs
     ):
         """
         n_dmps int: number of dynamic motor primitives

@@ -47,18 +47,22 @@ class LTE(object):
   #Create the laplacian, delta, and constraint matrices needed for calculation of trajectory
   def generateLaplacian(self):
     nbNodes = np.size(self.traj, 0)
-    L = np.zeros((nbNodes, nbNodes))
-    L = my_diag(L)
-    L = L * 2
-    A = np.zeros((nbNodes, nbNodes))
-    A = my_diag(A, -1)
-    L = L - A
-    B = np.zeros((nbNodes, nbNodes))
-    B = my_diag(B, 1)
-    L = L - B    
-    L[0][1] = -2.0
-    L[nbNodes - 1][nbNodes - 2] = -2.0
-    L = L / 2
+    L = 2.*np.diag(np.ones((nbNodes,))) - np.diag(np.ones((nbNodes-1,)),1) - np.diag(np.ones((nbNodes-1,)),-1)
+    L[0,1] = -2.
+    L[-1,-2] = -2.
+    L = L / 2.
+    #L = np.zeros((nbNodes, nbNodes))
+    #L = my_diag(L)
+    #L = L * 2
+    #A = np.zeros((nbNodes, nbNodes))
+    #A = my_diag(A, -1)
+    #L = L - A
+    #B = np.zeros((nbNodes, nbNodes))
+    #B = my_diag(B, 1)
+    #L = L - B    
+    #L[0][1] = -2.0
+    #L[nbNodes - 1][nbNodes - 2] = -2.0
+    #L = L / 2
     self.L = L
     self.generateDelta()
     if self.boundCond == 0:

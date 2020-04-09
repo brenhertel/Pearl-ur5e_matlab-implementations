@@ -1257,7 +1257,7 @@ class mlfd(object):
   
   def generate_svm_region(self, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    n_surf = 100
+    n_surf = 20
     name = 'SVM Similarity'
     if self.n_dims == 1:
         xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
@@ -1302,7 +1302,7 @@ class mlfd(object):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
     colors = ['r', 'g', 'b', 'c', 'm']
     n_surf = 1000
-    name = 'SVM Similarity'
+    name = 'SVM Similarity Contour'
     if self.n_dims == 1:
         xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
         fig = plt.figure()
@@ -1815,12 +1815,13 @@ def my_hd3(x1, x2, y1, y2, z1, z2):
     return max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
     
 def my_fd2(x1, x2, y1, y2):
+    numel = len(x1)
     org_traj = np.zeros((len(x1), 2))
     comp_traj = np.zeros((np.shape(org_traj)))
-    org_traj[:, 0] = np.transpose(x1).reshape((1000))
-    org_traj[:, 1] = np.transpose(y1).reshape((1000))
-    comp_traj[:, 0] = np.transpose(x2).reshape((1000))
-    comp_traj[:, 1] = np.transpose(y2).reshape((1000))
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
 
 def my_fd3(x1, x2, y1, y2, z1, z2):

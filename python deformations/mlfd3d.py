@@ -5,6 +5,7 @@ import preprocess
 import ja
 import lte
 import dmp
+import os
 
 def main():
     filename = 'bad preprocessed 3d_demo.h5'

@@ -87,6 +87,8 @@ def main():
     ax = plt.subplot2grid((6, 5), (x_axis, y_axis))
     ax.plot(x_data, y_data)
     [x0, y0] = get_lasa_traj2_initial(lasa_names[i])
+    print(x_data[0])
+    print(x0)
     #ax.title(lasa_names[i])
     [x_lte, x_ja, x_dmp] = perform_all_deformations(x_data, x0, lmbda=15.0)
     [y_lte, y_ja, y_dmp] = perform_all_deformations(y_data, y0, lmbda=15.0)
