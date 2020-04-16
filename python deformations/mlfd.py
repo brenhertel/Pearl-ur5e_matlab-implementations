@@ -20,6 +20,7 @@ import os
 from scipy.interpolate import RegularGridInterpolator
 import seaborn as sns; sns.set()
 from sklearn.svm import SVC
+import dtw
 
 ### TO-DO ###
 #add weights to similarity metrics
@@ -90,6 +91,11 @@ def my_get_max_from_column(A, col):
 def downsample_1d(traj, n=100):
     npts = np.linspace(0, len(traj) - 1, n)
     out = np.zeros((n))
+    print(np.shape(traj))
+    sz = np.shape(traj)
+    if len(sz) > 1:
+        if sz[0] < sz[1]:
+            traj = np.transpose(traj)
     for i in range (n):
         out[i] = traj[int(npts[i])]
     return out
@@ -405,7 +411,7 @@ class mlfd(object):
                         ax.plot(self.org_x, self.org_y, 'k')
                         plt.xticks([])
                         plt.yticks([])
-            plt.show()
+        #    plt.show()
         if self.n_dims == 3:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
@@ -1147,6 +1153,8 @@ class mlfd(object):
     self.treeY = Y
     self.X = X
     self.clf = SVC()
+    #print(X)
+    #print(Y)
     self.clf.fit(X, Y)
   
   def query_knn(self, coords, new_k=1, plot=False):
@@ -1795,12 +1803,13 @@ def main2():
             mlfd(x_data, y_data, shape_names[i], is_dmp_on=False)
 
 def my_hd2(x1, x2, y1, y2):
+    numel = len(x1)
     org_traj = np.zeros((len(x1), 2))
     comp_traj = np.zeros((np.shape(org_traj)))
-    org_traj[:, 0] = np.transpose(x1)
-    org_traj[:, 1] = np.transpose(y1)
-    comp_traj[:, 0] = np.transpose(x2)
-    comp_traj[:, 1] = np.transpose(y2)
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
     return max(directed_hausdorff(org_traj, comp_traj)[0], directed_hausdorff(comp_traj, org_traj)[0])
     
 def my_hd3(x1, x2, y1, y2, z1, z2):
@@ -1834,6 +1843,103 @@ def my_fd3(x1, x2, y1, y2, z1, z2):
     comp_traj[:, 1] = np.transpose(y2)
     comp_traj[:, 2] = np.transpose(z2)
     return similaritymeasures.frechet_dist(org_traj, comp_traj)
+
+def my_dtw2(x1, x2, y1, y2):
+    x_DTW = dtw.dtw(x1, x2)
+    y_DTW = dtw.dtw(y1, y2)
+    return (x_DTW.normalizedDistance + y_DTW.normalizedDistance) / 2.0
+    
+def my_curvature_conservation2(x1, x2, y1, y2):
+    sse = 0
+    numel = len(x1)
+    x1 = np.transpose(x1).reshape((numel))
+    y1 = np.transpose(y1).reshape((numel))
+    x2 = np.transpose(x2).reshape((numel))
+    y2 = np.transpose(y2).reshape((numel))
+    for i in range (1,numel - 1):
+        d2y1 = y1[i - 1] - (2 * y1[i]) + y1[i + 1]
+        dx21 = (x1[i + 1] - x1[i - 1])**2
+        d2ydx21 = d2y1 / dx21
+        d2y2 = y2[i - 1] - (2 * y2[i]) + y2[i + 1]
+        dx22 = (x2[i + 1] - x2[i - 1])**2
+        d2ydx22 = d2y2 / dx22
+        error = d2ydx21 - d2ydx22
+        sse = sse + error**2
+    return sse
+ 
+def my_crv2(x1, x2, y1, y2):
+    sse = 0
+    numel = len(x1)
+    x1 = np.transpose(x1).reshape((numel))
+    y1 = np.transpose(y1).reshape((numel))
+    x2 = np.transpose(x2).reshape((numel))
+    y2 = np.transpose(y2).reshape((numel))
+    L = 2.*np.diag(np.ones((numel,))) - np.diag(np.ones((numel-1,)),1) - np.diag(np.ones((numel-1,)),-1)
+    L[0,1] = -2.
+    L[-1,-2] = -2.
+    x_err = np.subtract(np.matmul(L, x1), np.matmul(L, x2))
+    y_err = np.subtract(np.matmul(L, y1), np.matmul(L, y2))
+    return np.sum(np.power(x_err, 2)) + np.sum(np.power(y_err, 2))
+
+def my_jerk2(x1, x2, y1, y2):
+    numel = len(x1)
+    x1 = np.transpose(x1).reshape((numel))
+    y1 = np.transpose(y1).reshape((numel))
+    x2 = np.transpose(x2).reshape((numel))
+    y2 = np.transpose(y2).reshape((numel))
+    J = -3.*np.diag(np.ones((numel,))) + 3.*np.diag(np.ones((numel-1,)), 1) - np.diag(np.ones((numel-2,)),2) + np.diag(np.ones((numel-1,)),-1)
+    x_err = np.subtract(np.matmul(J, x1), np.matmul(J, x2))
+    y_err = np.subtract(np.matmul(J, y1), np.matmul(J, y2))
+    return np.sum(np.power(x_err, 2)) + np.sum(np.power(y_err, 2))
+
+def my_endpoint_convergence2(x1, x2, y1, y2):
+    numel = len(x1)
+    x1 = np.transpose(x1).reshape((numel))
+    y1 = np.transpose(y1).reshape((numel))
+    x2 = np.transpose(x2).reshape((numel))
+    y2 = np.transpose(y2).reshape((numel))
+    return get_euclidian_dist(x2[-1], x1[-1], y2[-1], y1[-1])
+
+def my_curve_length2(x1, x2, y1, y2):
+    numel = len(x1)
+    org_traj = np.zeros((numel, 2))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
+    return similaritymeasures.curve_length_measure(org_traj, comp_traj)
+
+def my_pcm2(x1, x2, y1, y2):
+    numel = len(x1)
+    org_traj = np.zeros((numel, 2))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
+    return similaritymeasures.pcm(org_traj, comp_traj)
+
+def my_area_eval2(x1, x2, y1, y2):
+    numel = len(x1)
+    org_traj = np.zeros((numel, 2))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
+    return similaritymeasures.area_between_two_curves(org_traj, comp_traj)
+
+def sim_measure_dtw2(x1, x2, y1, y2):
+    numel = len(x1)
+    org_traj = np.zeros((numel, 2))
+    comp_traj = np.zeros((np.shape(org_traj)))
+    org_traj[:, 0] = np.transpose(x1).reshape((numel))
+    org_traj[:, 1] = np.transpose(y1).reshape((numel))
+    comp_traj[:, 0] = np.transpose(x2).reshape((numel))
+    comp_traj[:, 1] = np.transpose(y2).reshape((numel))
+    dtw, d = similaritymeasures.dtw(org_traj, comp_traj)
+    return dtw
 
 def main3():
     plt_fpath = '../pictures/lte_writing/test/'
