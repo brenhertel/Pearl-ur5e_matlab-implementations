@@ -91,7 +91,7 @@ def my_get_max_from_column(A, col):
 def downsample_1d(traj, n=100):
     npts = np.linspace(0, len(traj) - 1, n)
     out = np.zeros((n))
-    print(np.shape(traj))
+    #print(np.shape(traj))
     sz = np.shape(traj)
     if len(sz) > 1:
         if sz[0] < sz[1]:
@@ -642,6 +642,7 @@ class mlfd(object):
                 if self.n_dims == 2:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
+                            print('m: %d, i: %d, j: %d' % (m, i, j))
                             self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][m].traj, n_dsample))
                             if (metric_max == None or self.grid_similarities_ind[i][j][n][m].val > metric_max):
                                 metric_max = self.grid_similarities_ind[i][j][n][m].val
@@ -725,8 +726,10 @@ class mlfd(object):
                 for j in range (self.grid_size):
                     sim_val = 0
                     for n in range (self.n_metrics):
+                        print('m: %d, i: %d, j: %d, n: %d, sim: %f, weight: %f' % (m, i, j, n, self.grid_similarities_ind[i][j][n][m].val, self.metric_weights_norm[n]))
                         sim_val = sim_val + (self.metric_weights_norm[n] * self.grid_similarities_ind[i][j][n][m].val)
                     self.grid_similarities[i][j][m].val = sim_val
+                    print(self.grid_similarities[i][j][m].val)
         if self.n_dims == 3:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
@@ -1103,10 +1106,12 @@ class mlfd(object):
                 max_m = -1
                 max_s = threshold
                 for m in range (self.n_algs):
+                    print(self.grid_similarities[i][j][m].val)
                     if (self.grid_similarities[i][j][m].val > max_s):
                         max_m = m
                         max_s = self.grid_similarities[i][j][m].val
                 A[i][j] = max_m
+                print('\n')
     if self.n_dims == 3:
         A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
         for i in range (self.grid_size):
@@ -1153,8 +1158,8 @@ class mlfd(object):
     self.treeY = Y
     self.X = X
     self.clf = SVC()
-    #print(X)
-    #print(Y)
+    print(X)
+    print(Y)
     self.clf.fit(X, Y)
   
   def query_knn(self, coords, new_k=1, plot=False):
@@ -1908,6 +1913,8 @@ def my_curve_length2(x1, x2, y1, y2):
     org_traj[:, 1] = np.transpose(y1).reshape((numel))
     comp_traj[:, 0] = np.transpose(x2).reshape((numel))
     comp_traj[:, 1] = np.transpose(y2).reshape((numel))
+    print('Theirs:')
+    print(similaritymeasures.curve_length_measure(org_traj, comp_traj))
     return similaritymeasures.curve_length_measure(org_traj, comp_traj)
 
 def my_pcm2(x1, x2, y1, y2):
@@ -1940,6 +1947,17 @@ def sim_measure_dtw2(x1, x2, y1, y2):
     comp_traj[:, 1] = np.transpose(y2).reshape((numel))
     dtw, d = similaritymeasures.dtw(org_traj, comp_traj)
     return dtw
+
+def get_total_dist(x, y):
+    ttl = 0
+    for i in range (len(x) - 2):
+        ttl = ttl + get_euclidian_dist(x[i], y[i], x[i+1], y[i+1])
+    return ttl
+    
+def total_distance_comp2(x1, x2, y1, y2):
+    print('Mine:')
+    print(abs(get_total_dist(x1, y1) - get_total_dist(x2, y2)))
+    return abs(get_total_dist(x1, y1) - get_total_dist(x2, y2))
 
 def main3():
     plt_fpath = '../pictures/lte_writing/test/'
