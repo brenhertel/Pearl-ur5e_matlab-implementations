@@ -37,7 +37,7 @@ def perform_dmp_improved(traj, initial=[], end=[]):
   ntraj = np.reshape(traj, (1, max(np.shape(traj))))
   ## DMP ##
   dmp_traj = perform_dmp(ntraj, [initial, end])
-  dmp_traj = np.reshape(dmp_traj, np.shape(traj))
+  dmp_traj = np.reshape(dmp_traj, np.size(traj))
   return dmp_traj
 
 #in-file testing

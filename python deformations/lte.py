@@ -114,7 +114,7 @@ def perform_lte_improved(traj, initial=[], end=[]):
   indeces = [1, max(np.shape(traj)) - 1]
   lte_fixed_points = generate_lte_fixed_points(indeces, [initial, end])
   lte_traj = perform_lte(ntraj, lte_fixed_points)
-  lte_traj = np.reshape(lte_traj, np.shape(traj))
+  lte_traj = np.reshape(lte_traj, np.size(traj))
   #print(lte_traj)
   return lte_traj
 

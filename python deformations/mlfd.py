@@ -411,6 +411,7 @@ class mlfd(object):
                         ax.plot(self.org_x, self.org_y, 'k')
                         plt.xticks([])
                         plt.yticks([])
+                        #plt.show()
         #    plt.show()
         if self.n_dims == 3:
             for i in range (self.grid_size):
@@ -426,6 +427,25 @@ class mlfd(object):
                             print('Plotting a grid of 3D plots is too hard!')
     plt.show()
     plt.close('all')
+    
+  def get_deform_grid_2d(self, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    plt.figure()
+    for i in range (self.grid_size):
+        for j in range (self.grid_size):
+            plt.subplot(self.grid_size, self.grid_size, (self.grid_size * j + i + 1))
+            for m in range (self.n_algs):
+                #print(self.grid_deforms_x[i][j][m].traj)
+                plt.plot(self.grid_deforms_x[i][j][m].traj, self.grid_deforms_y[i][j][m].traj, colors[m])
+            plt.plot(self.org_x, self.org_y, 'k')
+            plt.xticks([])
+            plt.yticks([])
+    if (mode == 'save'):
+        plt.savefig(filepath + 'Grid_Deforms' + '.png')
+    else:            
+        plt.show() 
+    plt.close('all')
+    
     
   def calc_metrics_old(self, d_sample=True, n_dsample=100):
     for n in range (self.n_metrics):
@@ -688,15 +708,21 @@ class mlfd(object):
             for m in range (self.n_algs):
                 if self.n_dims == 1:
                     for i in range (self.grid_size):
+                        if math.isnan(self.grid_similarities_ind[i][n][m].val):
+                            self.grid_similarities_ind[i][n][m].val = 0.
                         self.grid_similarities_ind[i][n][m].val = my_map(self.grid_similarities_ind[i][n][m].val, metric_min, metric_max, 1, 0)
                 if self.n_dims == 2:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
+                            if math.isnan(self.grid_similarities_ind[i][j][n][m].val):
+                                self.grid_similarities_ind[i][j][n][m].val = 0.
                             self.grid_similarities_ind[i][j][n][m].val = my_map(self.grid_similarities_ind[i][j][n][m].val, metric_min, metric_max, 1, 0)
                 if self.n_dims == 3:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
+                                if math.isnan(self.grid_similarities_ind[i][j][k][n][m].val):
+                                    self.grid_similarities_ind[i][j][k][n][m].val = 0.
                                 self.grid_similarities_ind[i][j][k][n][m].val = my_map(self.grid_similarities_ind[i][j][k][n][m].val, metric_min, metric_max, 1, 0)
                 if (m == 3):
                     print(self._get_array_of_sim_metrics(n, m))
@@ -704,15 +730,21 @@ class mlfd(object):
             for m in range (self.n_algs):
                 if self.n_dims == 1:
                     for i in range (self.grid_size):
+                        if math.isnan(self.grid_similarities_ind[i][n][m].val):
+                            self.grid_similarities_ind[i][n][m].val = 1.
                         self.grid_similarities_ind[i][n][m].val = my_map(self.grid_similarities_ind[i][n][m].val, metric_min, metric_max, 0, 1)
                 if self.n_dims == 2:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
+                            if math.isnan(self.grid_similarities_ind[i][j][n][m].val):
+                                self.grid_similarities_ind[i][j][n][m].val = 1.
                             self.grid_similarities_ind[i][j][n][m].val = my_map(self.grid_similarities_ind[i][j][n][m].val, metric_min, metric_max, 0, 1)
                 if self.n_dims == 3:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
+                                if math.isnan(self.grid_similarities_ind[i][j][k][n][m].val):
+                                    self.grid_similarities_ind[i][j][k][n][m].val = 1.
                                 self.grid_similarities_ind[i][j][k][n][m].val = my_map(self.grid_similarities_ind[i][j][k][n][m].val, metric_min, metric_max, 0, 1)
     for m in range (self.n_algs):
         if self.n_dims == 1:
@@ -975,45 +1007,44 @@ class mlfd(object):
             plt.close('all')
 
   def plot_strongest_gradients(self, mode='save', filepath=''):
-    for n in range (self.n_metrics):
-        if self.n_dims == 1:
-            A = np.zeros((self.grid_size))
-            for i in range (self.grid_size):
+    if self.n_dims == 1:
+        A = np.zeros((self.grid_size))
+        for i in range (self.grid_size):
+            max_s = None
+            for m in range (self.n_algs):
+                if (max_s == None or max_s < self.grid_similarities[i][n][m].val):
+                    max_s = self.grid_similarities[i][n][m].val
+                    max_m = m
+            A[i] = max_m
+        B = self._convert_num_to_rgb(A)
+        im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
+        plt.xticks([])
+        plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
+        if (mode == 'save'):
+            plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
+        else:
+            plt.show()                                     
+    if self.n_dims == 2:
+        A = np.zeros((self.grid_size, self.grid_size))
+        for i in range (self.grid_size):
+            for j in range (self.grid_size):
                 max_s = None
                 for m in range (self.n_algs):
-                    if (max_s == None or max_s < self.grid_similarities[i][n][m].val):
-                        max_s = self.grid_similarities[i][n][m].val
+                    if (max_s == None or max_s < self.grid_similarities[i][j][m].val):
+                        max_s = self.grid_similarities[i][j][m].val
                         max_m = m
-                A[i] = max_m
-            B = self._convert_num_to_rgb(A)
-            im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
-            plt.xticks([])
-            plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
-            if (mode == 'save'):
-                plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
-            else:
-                plt.show()                                     
-        if self.n_dims == 2:
-            A = np.zeros((self.grid_size, self.grid_size))
-            for i in range (self.grid_size):
-                for j in range (self.grid_size):
-                    max_s = None
-                    for m in range (self.n_algs):
-                        if (max_s == None or max_s < self.grid_similarities[i][j][n][m].val):
-                            max_s = self.grid_similarities[i][j][n][m].val
-                            max_m = m
-                    A[i][j] = max_m
-            B = self._convert_num_to_rgb(A)
-            im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
-            plt.xticks([])
-            plt.yticks([])
-            plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
-            if (mode == 'save'):
-                plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
-            else:
-                plt.show()           
-        if self.n_dims == 3:
-            print('Gradient in 3D too difficult to show')
+                A[i][j] = max_m
+        B = self._convert_num_to_rgb(A)
+        im = plt.imshow(B, vmin=0, vmax=1)
+        plt.xticks([])
+        plt.yticks([])
+        #plt.title(self.metric_names[0] + 'Comparison', fontsize=self.f_size)
+        if (mode == 'save'):
+            plt.savefig(filepath + self.metric_names[0] + 'Comparison' + '.png')
+        else:
+            plt.show()           
+    if self.n_dims == 3:
+        print('Gradient in 3D too difficult to show')
     plt.close('all')
         
   def _get_strongest_repro_old(self, threshold=0.0):
@@ -1413,14 +1444,14 @@ class mlfd(object):
         alg_interps = []
         for m in range (self.n_algs):
             if (self.n_dims == 1):
-                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size))), self._get_array_of_sim_metrics(n, m)))
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size))), self._get_array_of_sim_metrics(m)))
             if (self.n_dims == 2):
                 #print(self.x_vals)
                 #print(self.y_vals)
                 #print(self._get_array_of_sim_metrics(n, m))
-                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size))), self._get_array_of_sim_metrics(n, m)))
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size))), self._get_array_of_sim_metrics(m)))
             if (self.n_dims == 3):
-                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self._get_array_of_sim_metrics(n, m)))
+                alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self._get_array_of_sim_metrics(m)))
         self.interps.append(alg_interps)
   
   def plot_surfaces(self, mode='save', filepath=''):
@@ -1557,22 +1588,22 @@ class mlfd(object):
                     A[i][j][k] = self.grid_similarities[i][j][k][metric_num][alg_num].val
     return A
 
-  def _get_array_of_sim_metrics(self, metric_num):
+  def _get_array_of_sim_metrics(self, alg_num):
     if self.n_dims == 1:
         A = np.zeros((self.grid_size))
         for i in range (self.grid_size):
-            A[i] = self.grid_similarities[i][metric_num].val                                
+            A[i] = self.grid_similarities[i][alg_num].val                                
     if self.n_dims == 2:
         A = np.zeros((self.grid_size, self.grid_size))
         for i in range (self.grid_size):
             for j in range (self.grid_size):
-                A[i][j] = self.grid_similarities[i][j][metric_num].val
+                A[i][j] = self.grid_similarities[i][j][alg_num].val
     if self.n_dims == 3:
         A = np.zeros((self.grid_size, self.grid_size, self.grid_size))
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 for k in range (self.grid_size):
-                    A[i][j][k] = self.grid_similarities[i][j][k][metric_num].val
+                    A[i][j][k] = self.grid_similarities[i][j][k][alg_num].val
     return A
 
   def get_plots_at_point1(self, i, mode='save', filepath=''):
