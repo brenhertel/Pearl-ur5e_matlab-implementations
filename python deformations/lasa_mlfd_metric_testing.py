@@ -16,13 +16,21 @@ lasa_names = ['Angle','BendedLine','CShape','DoubleBendedLine','GShape', \
              'Zshape','Multi_Models_1','Multi_Models_2','Multi_Models_3','Multi_Models_4']
 
 
-metric_funx = [mlfd.my_hd2, mlfd.my_fd2, mlfd.my_dtw2, mlfd.my_curvature_conservation2, \
-                mlfd.my_crv2, mlfd.my_jerk2, mlfd.my_endpoint_convergence2, mlfd.my_curve_length2, \
+#metric_funx = [mlfd.my_hd2, mlfd.my_fd2, mlfd.my_dtw2, mlfd.my_curvature_conservation2, \
+#                mlfd.my_crv2, mlfd.my_jerk2, mlfd.my_endpoint_convergence2, mlfd.my_curve_length2, \
+#                mlfd.my_pcm2, mlfd.my_area_eval2, mlfd.sim_measure_dtw2, mlfd.total_distance_comp2]
+#
+#metric_names = ['Haussdorff', 'Frechet', 'DTW', 'Curvature_Conservation', \
+#                'Curvature_Conservation2', 'Jerk_Evaluation', 'Endpoint_Convergence', 'Curve_Length', \
+#                'PCM', 'Area', 'DTW2', 'Curve_Length2']
+
+metric_funx = [mlfd.my_hd2, mlfd.my_fd2,  \
+                mlfd.my_crv2, mlfd.my_endpoint_convergence2, mlfd.my_curve_length2, \
                 mlfd.my_pcm2, mlfd.my_area_eval2, mlfd.sim_measure_dtw2, mlfd.total_distance_comp2]
 
-metric_names = ['Haussdorff', 'Frechet', 'DTW', 'Curvature_Conservation', \
-                'Curvature_Conservation2', 'Jerk_Evaluation', 'Endpoint_Convergence', 'Curve_Length', \
-                'PCM', 'Area', 'DTW2', 'Curve_Length2']
+metric_names = ['Haussdorff', 'Frechet', \
+                'Curvature_Conservation2', 'Endpoint_Convergence', 'Curve_Length', \
+                'PCM', 'Area', 'DTW', 'Curve_Length2']
 
 def get_lasa_traj1(shape_name):
     #ask user for the file which the playback is for
@@ -63,7 +71,7 @@ def main():
             my_mlfd.add_traj_dimension(y, 'y')
             my_mlfd.add_deform_alg(ja.perform_ja_improved, 'FJA')
             my_mlfd.add_deform_alg(lte.perform_lte_improved, 'LTE')
-            #my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+            my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
             my_mlfd.add_metric(metric_funx[j], type='custom', name=metric_name, weight=1.0, is_dissim=True)
             my_mlfd.create_grid(9, [10, 10])
             my_mlfd.deform_traj(plot=False)

@@ -110,6 +110,9 @@ def downsample_1d(traj, n=100):
 def get_euclidian_dist(x1, y1, x2, y2):
     return ((x2-x1)**2 + (y2-y1)**2)**0.5
 
+def get_euclidian_dist3(x1, y1, x2, y2, z1, z2):
+    return ((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)**0.5
+
 #function to get the total travel distance of a 2D trajectory
 #arguments
 #x: x values of trajectory
@@ -120,7 +123,13 @@ def get_total_dist(x, y):
     for i in range (len(x) - 2):
         ttl = ttl + get_euclidian_dist(x[i], y[i], x[i+1], y[i+1])
     return ttl
-
+    
+def get_total_dist3(x, y, z):
+    ttl = 0
+    for i in range (len(x) - 2):
+        ttl = ttl + get_euclidian_dist3(x[i], y[i], x[i+1], y[i+1], z[i], z[i + 1])
+    return ttl
+    
 #simple function to get the distance between the start and end of a 2D trajectory
 #arguments
 #x: x values of trajectory
@@ -247,6 +256,64 @@ class mlfd(object):
         self.add_metric(my_fd2, type='geometry', name='Frechet', weight=1.0, is_dissim=True)
     if self.n_dims == 3:
         self.add_metric(my_fd3, type='geometry', name='Frechet', weight=1.0, is_dissim=True)
+    
+  def decide_metrics(self):
+    displace = self.get_demo_dist() / 10.0
+    converge_alg = ja.perform_ja_improved
+    preserve_alg = lte.perform_lte_improved
+    if self.n_dims == 1:
+        print('1D metrics not implemented yet!')
+    if self.n_dims == 2:
+        converge_metric = my_area_eval2
+        preserve_metric = my_crv2
+        temp_mlfd = mlfd()
+        temp_mlfd.add_traj_dimension(self.org_x, 'x')
+        temp_mlfd.add_traj_dimension(self.org_y, 'y')
+        temp_mlfd.add_deform_alg(converge_alg, 'Converge')
+        temp_mlfd.add_deform_alg(preserve_alg, 'Preserve')
+        temp_mlfd.add_metric(my_fd2, type='shape', name='Preserve', weight=1.0, is_dissim=True)
+        temp_mlfd.reproduce_at_point(np.array([[self.org_x[0][0] + displace, self.org_y[0][0] + displace]]), plot=True)
+        ext = False
+        while not ext:
+            ans = input('Which reproduction is preferable? Black is the given demonstration. Type "r" for red and "g" for green: ')
+            if (ans == 'r'):
+                ext = True
+                self.add_metric(converge_metric, type='Converge', name='Converge', weight=1.0, is_dissim=True)
+            elif (ans == 'g'):
+                ext = True
+                self.add_metric(preserve_metric, type='Preserve', name='Preserve', weight=1.0, is_dissim=True)
+            else:
+                print('Input not recognized. Please try again.')
+    if self.n_dims == 3:
+        converge_metric = my_area_eval3
+        preserve_metric = my_crv3
+        temp_mlfd = mlfd()
+        temp_mlfd.add_traj_dimension(self.org_x, 'x')
+        temp_mlfd.add_traj_dimension(self.org_y, 'y')
+        temp_mlfd.add_traj_dimension(self.org_z, 'z')
+        temp_mlfd.add_deform_alg(converge_alg, 'Converge')
+        temp_mlfd.add_deform_alg(preserve_alg, 'Preserve')
+        temp_mlfd.add_metric(my_fd3, type='shape', name='Preserve', weight=1.0, is_dissim=True)
+        temp_mlfd.reproduce_at_point(np.array([[self.org_x[0][0] + displace, self.org_y[0][0] + displace, self.org_z[0][0] + displace]]), plot=True)
+        ext = False
+        while not ext:
+            ans = input('Which reproduction is preferable? Black is the given demonstration. Type "r" for red and "g" for green: ')
+            if (ans == 'r'):
+                ext = True
+                self.add_metric(converge_metric, type='Converge', name='Converge', weight=1.0, is_dissim=True)
+            elif (ans == 'g'):
+                ext = True
+                self.add_metric(preserve_metric, type='Preserve', name='Preserve', weight=1.0, is_dissim=True)
+            else:
+                print('Input not recognized. Please try again.')
+    
+  def get_demo_dist(self):
+    if self.n_dims == 1:
+        return self.org_x[-1] - self.org_x[0]
+    if self.n_dims == 2:
+        return get_total_dist(self.org_x, self.org_y)
+    if self.n_dims == 3:
+        return get_total_dist3(self.org_x, self.org_y, self.org_z)
     
   #Create the grid for which mlfd tests the generalization of the algorithms given against the metrics given
   #mlfd.create_grid(10, [20, 20, 20])
@@ -1251,10 +1318,7 @@ class mlfd(object):
                 #fig.hold(True)
                 #print(self.current_deforms_x[m].traj)
                 #print(self.current_deforms_y[m].traj)
-                if m == 0:
-                    plt.plot(self.current_deforms_x[m].traj, self.current_deforms_y[m].traj, colors[m])
-                else:
-                    plt.plot(self.current_deforms_x[m].traj[0], self.current_deforms_y[m].traj[0], colors[m])
+                plt.plot(self.current_deforms_x[m].traj, self.current_deforms_y[m].traj, colors[m])
                 #plt.plot(self.org_x, self.org_y, 'k')
                 #plt.show()
     if self.n_dims == 3:
@@ -1288,13 +1352,13 @@ class mlfd(object):
         if self.n_dims == 2:
             sim_val = 0
             for n in range (self.n_metrics):
-                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, ))
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj))
             print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
             cur_sim_vals.append(sim_val)
         if self.n_dims == 3:
             sim_val = 0
             for n in range (self.n_metrics):
-                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, self.org_z, self.current_deforms_z[m].traj, ))
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, self.org_z, self.current_deforms_z[m].traj))
             print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
             cur_sim_vals.append(sim_val)
     return cur_sim_vals
