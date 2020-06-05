@@ -65,14 +65,19 @@ def main():
     #    for j in range(len(metric_names)):
     for i in range (1):
         [x, y] = get_lasa_traj1(lasa_names[i])
+        #z = np.subtract(x, y)
         my_mlfd = mlfd.mlfd()
         my_mlfd.add_traj_dimension(x, 'x')
         my_mlfd.add_traj_dimension(y, 'y')
-        my_mlfd.add_deform_alg(converging_vector_alg.converging_vector_alg, 'CVA')
-        my_mlfd.add_deform_alg(preserving_vector_alg.preserving_vector_alg, 'PVA')
-        #my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
-        my_mlfd.decide_metrics()
-        my_mlfd.create_grid(9, [10, 10])
+        #my_mlfd.add_traj_dimension(z, 'z')
+        my_mlfd.add_deform_alg(ja.perform_ja_improved, 'FJA')
+        my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+        #my_mlfd.add_deform_alg(lte.perform_lte_improved, 'LTE')
+        #my_mlfd.add_deform_alg(converging_vector_alg.converging_vector_alg, 'CVA')
+        #my_mlfd.add_deform_alg(preserving_vector_alg.preserving_vector_alg, 'PVA')
+        #my_mlfd.decide_metrics()
+        my_mlfd.add_metric(mlfd.curvature_comparison, type='Preserve', name='Preserve', weight=1.0, is_dissim=True)
+        my_mlfd.create_grid()
         my_mlfd.deform_traj(plot=False)
         my_mlfd.get_deform_grid_2d()
         #if (j == 0):
@@ -87,7 +92,7 @@ def main():
         #my_mlfd.svm_region_contour(filepath=plt_fpath)
         #my_mlfd.generate_svm_region(filepath=plt_fpath)
         #my_mlfd.reproduce_at_point(np.array([[x[0][0] + 5, y[0][0] - 5]]), plot=True)
-        my_mlfd.plot_strongest_gradients(mode='show')
+        my_mlfd.plot_strongest_gradients_thresholded(mode='show')
      
 if __name__ == '__main__':
   main()

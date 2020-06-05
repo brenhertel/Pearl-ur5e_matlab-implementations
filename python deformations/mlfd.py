@@ -206,6 +206,10 @@ class mlfd(object):
     self.alg_names.append(name)
     self.n_algs = self.n_algs + 1
     
+  def use_default_deforms(self):
+    self.add_deform_alg(ja.perform_ja_improved, 'FJA')
+    self.add_deform_alg(lte.perform_lte_improved, 'LTE')
+    
   #Add a similarity metric to the object to store
   #Ensure the metrix takes the arguments similarity_value = similarity_metric(x1, x2, y1, y2, z1, z2) where all arguments are vectors
   #mlfd.add_sim_metric(similarity_metric, 'MY_METRIC')
@@ -249,7 +253,7 @@ class mlfd(object):
         for n in range (self.n_metrics):
             self.metric_weights_norm[n] = self.metric_weights[n] / sum
     
-  def use_default_metrics(self):
+  def use_default_metrics(self): #deprecated, replaced bt decide_metrics
     if self.n_dims == 1:
         print('1D metrics not implemented yet!')
     if self.n_dims == 2:
@@ -264,14 +268,14 @@ class mlfd(object):
     if self.n_dims == 1:
         print('1D metrics not implemented yet!')
     if self.n_dims == 2:
-        converge_metric = my_area_eval2
-        preserve_metric = my_crv2
+        converge_metric = sum_of_dists
+        preserve_metric = curvature_comparison
         temp_mlfd = mlfd()
         temp_mlfd.add_traj_dimension(self.org_x, 'x')
         temp_mlfd.add_traj_dimension(self.org_y, 'y')
         temp_mlfd.add_deform_alg(converge_alg, 'Converge')
         temp_mlfd.add_deform_alg(preserve_alg, 'Preserve')
-        temp_mlfd.add_metric(my_fd2, type='shape', name='Preserve', weight=1.0, is_dissim=True)
+        temp_mlfd.add_metric(similaritymeasures.frechet_dist, type='shape', name='Preserve', weight=1.0, is_dissim=True)
         temp_mlfd.reproduce_at_point(np.array([[self.org_x[0][0] + displace, self.org_y[0][0] + displace]]), plot=True)
         ext = False
         while not ext:
@@ -285,15 +289,15 @@ class mlfd(object):
             else:
                 print('Input not recognized. Please try again.')
     if self.n_dims == 3:
-        converge_metric = my_area_eval3
-        preserve_metric = my_crv3
+        converge_metric = sum_of_dists
+        preserve_metric = curvature_comparison
         temp_mlfd = mlfd()
         temp_mlfd.add_traj_dimension(self.org_x, 'x')
         temp_mlfd.add_traj_dimension(self.org_y, 'y')
         temp_mlfd.add_traj_dimension(self.org_z, 'z')
         temp_mlfd.add_deform_alg(converge_alg, 'Converge')
         temp_mlfd.add_deform_alg(preserve_alg, 'Preserve')
-        temp_mlfd.add_metric(my_fd3, type='shape', name='Preserve', weight=1.0, is_dissim=True)
+        temp_mlfd.add_metric(similaritymeasures.frechet_dist, type='shape', name='Preserve', weight=1.0, is_dissim=True)
         temp_mlfd.reproduce_at_point(np.array([[self.org_x[0][0] + displace, self.org_y[0][0] + displace, self.org_z[0][0] + displace]]), plot=True)
         ext = False
         while not ext:
@@ -386,10 +390,12 @@ class mlfd(object):
                     for k in range (self.grid_size):
                         print('X: %f, Y: %f, Z: %f' % (self.grid[i][j][k].x, self.grid[i][j][k].y, self.grid[i][j][k].z))
    
-  def create_grid(self, given_grid_size, dists, disp=False):
+  def create_grid(self, given_grid_size=9, dists=None, disp=False):
     if (np.size(self.org_x) == 0):
         print('WARNING: No trajectories given')
     self.grid_size = given_grid_size
+    if dists == None:
+        dists = np.ones(self.n_dims) * (self.get_demo_dist() / 10.0)
     if (self.n_dims >= 1):
         center = point(self.org_x[0])
         grid_max_x = center.x + (dists[0] / 2)
@@ -495,7 +501,7 @@ class mlfd(object):
     plt.show()
     plt.close('all')
     
-  def get_deform_grid_2d(self, mode='save', filepath=''):
+  def get_deform_grid_2d(self, mode='show', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     plt.figure()
     for i in range (self.grid_size):
@@ -721,7 +727,7 @@ class mlfd(object):
             if d_sample == True:
                 if self.n_dims == 1:
                     for i in range (self.grid_size):
-                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][m].traj, n_dsample))
+                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](np.hstack((np.reshape(downsample_1d(self.org_x, n_dsample), (n_dsample, 1)))), np.hstack((np.reshape(downsample_1d(self.grid_deforms_x[i][m].traj, n_dsample), (n_dsample, 1)))))
                         if (metric_max == None or self.grid_similarities_ind[i][n][m].val > metric_max):
                             metric_max = self.grid_similarities_ind[i][n][m].val
                         if (metric_min == None or self.grid_similarities_ind[i][n][m].val < metric_min):
@@ -730,7 +736,7 @@ class mlfd(object):
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             print('m: %d, i: %d, j: %d' % (m, i, j))
-                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][m].traj, n_dsample))
+                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](np.hstack((np.reshape(downsample_1d(self.org_x, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.org_y, n_dsample), (n_dsample, 1)))), np.hstack((np.reshape(downsample_1d(self.grid_deforms_x[i][j][m].traj, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.grid_deforms_y[i][j][m].traj, n_dsample), (n_dsample, 1)))))
                             if (metric_max == None or self.grid_similarities_ind[i][j][n][m].val > metric_max):
                                 metric_max = self.grid_similarities_ind[i][j][n][m].val
                             if (metric_min == None or self.grid_similarities_ind[i][j][n][m].val < metric_min):
@@ -739,7 +745,7 @@ class mlfd(object):
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
-                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](downsample_1d(self.org_x, n_dsample), downsample_1d(self.grid_deforms_x[i][j][k][m].traj, n_dsample), downsample_1d(self.org_y, n_dsample), downsample_1d(self.grid_deforms_y[i][j][k][m].traj, n_dsample), downsample_1d(self.org_z, n_dsample), downsample_1d(self.grid_deforms_z[i][j][k][m].traj, n_dsample))
+                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](np.hstack((np.reshape(downsample_1d(self.org_x, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.org_y, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.org_z, n_dsample), (n_dsample, 1)))), np.hstack((np.reshape(downsample_1d(self.grid_deforms_x[i][j][k][m].traj, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.grid_deforms_y[i][j][k][m].traj, n_dsample), (n_dsample, 1)), np.reshape(downsample_1d(self.grid_deforms_z[i][j][k][m].traj, n_dsample), (n_dsample, 1)))))
                                 if (metric_max == None or self.grid_similarities_ind[i][j][k][n][m].val > metric_max):
                                     metric_max = self.grid_similarities_ind[i][j][k][n][m].val
                                 if (metric_min == None or self.grid_similarities_ind[i][j][k][n][m].val < metric_min):
@@ -747,7 +753,7 @@ class mlfd(object):
             else:
                 if self.n_dims == 1:
                     for i in range (self.grid_size):
-                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][m].traj)
+                        self.grid_similarities_ind[i][n][m].val = self.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)))), np.hstack((np.reshape(self.grid_deforms_x[i][m].traj, (self.traj_len, 1)))))
                         if (metric_max == None or self.grid_similarities_ind[i][n][m].val > metric_max):
                             metric_max = self.grid_similarities_ind[i][n][m].val
                         if (metric_min == None or self.grid_similarities_ind[i][n][m].val < metric_min):
@@ -755,8 +761,7 @@ class mlfd(object):
                 if self.n_dims == 2:
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
-                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][j][m].traj, self.org_y, self.grid_deforms_y[i][j][m].traj)
-                            print(self.grid_similarities_ind[i][j][n][m].val)
+                            self.grid_similarities_ind[i][j][n][m].val = self.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)), np.reshape(self.org_y, (self.traj_len, 1)))), np.hstack((np.reshape(self.grid_deforms_x[i][j][m].traj, (self.traj_len, 1)), np.reshape(self.grid_deforms_y[i][j][m].traj, (self.traj_len, 1)))))
                             if (metric_max == None or self.grid_similarities_ind[i][j][n][m].val > metric_max):
                                 metric_max = self.grid_similarities_ind[i][j][n][m].val
                             if (metric_min == None or self.grid_similarities_ind[i][j][n][m].val < metric_min):
@@ -765,7 +770,7 @@ class mlfd(object):
                     for i in range (self.grid_size):
                         for j in range (self.grid_size):
                             for k in range (self.grid_size):
-                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](self.org_x, self.grid_deforms_x[i][j][k][m].traj, self.org_y, self.grid_deforms_y[i][j][k][m].traj, self.org_z, self.grid_deforms_z[i][j][k][m].traj)
+                                self.grid_similarities_ind[i][j][k][n][m].val = self.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)), np.reshape(self.org_y, (self.traj_len, 1)), np.reshape(self.org_z, (self.traj_len, 1)))), np.hstack((np.reshape(self.grid_deforms_x[i][j][k][m].traj, (self.traj_len, 1)), np.reshape(self.grid_deforms_y[i][j][k][m].traj, (self.traj_len, 1)), np.reshape(self.grid_deforms_z[i][j][k][m].traj, (self.traj_len, 1)))))
                                 if (metric_max == None or self.grid_similarities_ind[i][j][k][n][m].val > metric_max):
                                     metric_max = self.grid_similarities_ind[i][j][k][n][m].val
                                 if (metric_min == None or self.grid_similarities_ind[i][j][k][n][m].val < metric_min):
@@ -837,6 +842,13 @@ class mlfd(object):
                         for n in range (self.n_metrics):
                             sim_val = sim_val + (self.metric_weights_norm[n] * self.grid_similarities_ind[i][j][k][n][m].val)
                         self.grid_similarities[i][j][k][m].val = sim_val
+  
+  def default_process(self):
+    self.use_default_deforms()
+    self.decide_metrics()
+    self.create_grid()
+    self.deform_traj(plot=False)
+    self.calc_metrics(d_sample=True)
   
   def save_results_old(self, filename='unspecified.h5'):
     fp = h5py.File(filename, 'w')
@@ -1026,6 +1038,7 @@ class mlfd(object):
         if self.n_dims == 2:
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
+                    print(metric[i][j])
                     self.grid_similarities[i][j][m].val = metric[i][j]
         if self.n_dims == 3:
             for i in range (self.grid_size):
@@ -1113,7 +1126,55 @@ class mlfd(object):
     if self.n_dims == 3:
         print('Gradient in 3D too difficult to show')
     plt.close('all')
-        
+    
+  def plot_strongest_gradients_thresholded(self, mode='save', filepath='', threshold=0.1):
+    if self.n_dims == 1:
+        print('Coming Soon!')
+    #    A = np.zeros((self.grid_size))
+    #    for i in range (self.grid_size):
+    #        max_s = None
+    #        for m in range (self.n_algs):
+    #            if (max_s == None or max_s < self.grid_similarities[i][n][m].val):
+    #                max_s = self.grid_similarities[i][n][m].val
+    #                max_m = m
+    #        A[i] = max_m
+    #    B = self._convert_num_to_rgb(A)
+    #    im = plt.imshow(np.transpose(B), vmin=0, vmax=1)
+    #    plt.xticks([])
+    #    plt.title(self.metric_names[n] + 'Comparison', fontsize=self.f_size)
+    #    if (mode == 'save'):
+    #        plt.savefig(filepath + self.metric_names[n] + 'Comparison' + '.png')
+    #    else:
+    #        plt.show()                                     
+    if self.n_dims == 2:
+        A = np.zeros((self.grid_size, self.grid_size))
+        for i in range (self.grid_size):
+            for j in range (self.grid_size):
+                max_s = None
+                sims = np.zeros((self.n_algs))
+                for m in range (self.n_algs):
+                    sims[m] = self.grid_similarities[i][j][m].val
+                if (max(sims) - min(sims) < threshold):
+                    A[i][j] = -1
+                else:
+                    for m in range (self.n_algs):
+                        if (max_s == None or max_s < self.grid_similarities[i][j][m].val):
+                            max_s = self.grid_similarities[i][j][m].val
+                            max_m = m
+                    A[i][j] = max_m
+        B = self._convert_num_to_rgb(A)
+        im = plt.imshow(B, vmin=0, vmax=1)
+        plt.xticks([])
+        plt.yticks([])
+        #plt.title(self.metric_names[0] + 'Comparison', fontsize=self.f_size)
+        if (mode == 'save'):
+            plt.savefig(filepath + self.metric_names[0] + 'Comparison' + '.png')
+        else:
+            plt.show()           
+    if self.n_dims == 3:
+        print('Gradient in 3D too difficult to show')
+    plt.close('all')
+    
   def _get_strongest_repro_old(self, threshold=0.0):
     for n in range (self.n_metrics):
         if self.n_dims == 1:
@@ -1346,19 +1407,19 @@ class mlfd(object):
         if self.n_dims == 1:
             sim_val = 0
             for n in range (self.n_metrics):
-                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, ))
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)))), np.hstack((np.reshape(self.current_deforms_x[m].traj, (self.traj_len, 1))))))
             print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
             cur_sim_vals.append(sim_val)
         if self.n_dims == 2:
             sim_val = 0
             for n in range (self.n_metrics):
-                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj))
+                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)), np.reshape(self.org_y, (self.traj_len, 1)))), np.hstack((np.reshape(self.current_deforms_x[m].traj, (self.traj_len, 1)), np.reshape(self.current_deforms_y[m].traj, (self.traj_len, 1))))))
             print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
             cur_sim_vals.append(sim_val)
         if self.n_dims == 3:
             sim_val = 0
             for n in range (self.n_metrics):
-                sim_val = sim_val + (self.metric_weights_norm[n] * self.metrics[n](self.org_x, self.current_deforms_x[m].traj, self.org_y, self.current_deforms_y[m].traj, self.org_z, self.current_deforms_z[m].traj))
+                sim_val = sim_val + (self.metric_weights_norm[n] * elf.metrics[n](np.hstack((np.reshape(self.org_x, (self.traj_len, 1)), np.reshape(self.org_y, (self.traj_len, 1)), np.reshape(self.org_z, (self.traj_len, 1)))), np.hstack((np.reshape(self.current_deforms_x[m].traj, (self.traj_len, 1)), np.reshape(self.current_deforms_y[m].traj, (self.traj_len, 1)), np.reshape(self.current_deforms_z[m].traj, (self.traj_len, 1))))))
             print(('Raw similarity value of %f for ' + self.alg_names[m]) % (sim_val))
             cur_sim_vals.append(sim_val)
     return cur_sim_vals
@@ -1495,6 +1556,10 @@ class mlfd(object):
                 elif A[i][j] == 5:
                     B[i][j][1] = 255
                     B[i][j][2] = 255
+                elif A[i][j] < 0:
+                    B[i][j][0] = 0
+                    B[i][j][1] = 0
+                    B[i][j][2] = 0
                 else:
                     print('Too many algorithms to represent color')
     if self.n_dims == 3:
@@ -2053,6 +2118,33 @@ def total_distance_comp2(x1, x2, y1, y2):
     print('Mine:')
     print(abs(get_total_dist(x1, y1) - get_total_dist(x2, y2)))
     return abs(get_total_dist(x1, y1) - get_total_dist(x2, y2))
+
+def get_euclidian_dist_any(pts1, pts2):
+    n_dims = len(pts1)
+    sum = 0.
+    for i in range(n_dims):
+        sum += (pts1[i] - pts2[i])**2
+    return sum**0.5
+    
+def sum_of_dists(exp_data, num_data):
+    #naive approach
+    (n_points, n_dims) = np.shape(exp_data)
+    if not np.shape(exp_data) == np.shape(num_data):
+        print('Array dims must match!')
+    sum = 0.
+    for i in range(n_points):
+        sum += get_euclidian_dist_any(exp_data[i], num_data[i]) 
+    return sum
+
+def curvature_comparison(exp_data, num_data):
+    (n_points, n_dims) = np.shape(exp_data)
+    if not np.shape(exp_data) == np.shape(num_data):
+        print('Array dims must match!')
+    L = 2.*np.diag(np.ones((n_points,))) - np.diag(np.ones((n_points-1,)),1) - np.diag(np.ones((n_points-1,)),-1)
+    L[0,1] = -2.
+    L[-1,-2] = -2.
+    err_abs = np.absolute(np.subtract(np.matmul(L, exp_data), np.matmul(L, num_data)))
+    return np.sum(err_abs)
 
 def main3():
     plt_fpath = '../pictures/lte_writing/test/'

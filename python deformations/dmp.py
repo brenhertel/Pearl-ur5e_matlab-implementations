@@ -24,7 +24,7 @@ def perform_dmp(traj, given_points=0, alpha_y=None, beta_y=None):
   #print('Start: %f, end: %f' % (y_track[0], y_track[len(y_track) - 1]))
   return y_track
 
-def perform_dmp_improved(traj, initial=[], end=[]):
+def perform_dmp_improved(traj, initial=[], end=[], ay=None, by=None):
   #set up endpoints if none specified
   if not initial:
     initial = traj[0]
@@ -36,7 +36,7 @@ def perform_dmp_improved(traj, initial=[], end=[]):
       traj = np.transpose(traj)
   ntraj = np.reshape(traj, (1, max(np.shape(traj))))
   ## DMP ##
-  dmp_traj = perform_dmp(ntraj, [initial, end])
+  dmp_traj = perform_dmp(ntraj, [initial, end], alpha_y=ay, beta_y=by)
   dmp_traj = np.reshape(dmp_traj, np.size(traj))
   return dmp_traj
 

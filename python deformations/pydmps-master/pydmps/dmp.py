@@ -51,9 +51,11 @@ class DMPs(object):
             w = np.zeros((self.n_dmps, self.n_bfs))
         self.w = w
 
-        self.ay = np.ones(n_dmps) * 25.0 if ay is None else ay  # Schaal 2012
-        self.by = self.ay / 4.0 if by is None else by  # Schaal 2012
-
+        self.ay = np.ones(n_dmps) * 25.0 if ay is None else np.ones(n_dmps) * ay  # Schaal 2012
+        #self.ay = np.ones(n_dmps) * 1000.0 if ay is None else np.ones(n_dmps) * ay
+        self.by = self.ay / 4.0 if by is None else np.ones(n_dmps) * by  # Schaal 2012
+        #self.by = np.ones(n_dmps) * 100.0
+        
         # set up the CS
         self.cs = CanonicalSystem(dt=self.dt, **kwargs)
         self.timesteps = int(self.cs.run_time / self.dt)
