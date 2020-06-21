@@ -430,14 +430,20 @@ class mlfd(object):
         self.grid_deforms_y = [[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities = [[[val() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities_ind = [[[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)] for j in range (self.grid_size)]
+        plt.figure()
+        plt.axis('off')
+        plt.grid(b=None)
+        plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 self.grid[j][i].x = self.x_vals[j]
                 self.grid[j][i].y = self.y_vals[self.grid_size - 1 - i]
+                plt.plot(self.grid[j][i].x, self.grid[j][i].y, 'k.', markersize=20)
         if (disp == True):
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
                     print('X: %f, Y: %f' % (self.grid[i][j].x, self.grid[i][j].y))
+        plt.show()
     if (self.n_dims == 3):
         self.grid = [[[point() for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
         #self.grid_x, self.grid_y, self.grid_z = np.meshgrid(x_vals, y_vals, z_vals)
@@ -1076,7 +1082,7 @@ class mlfd(object):
         for n in range (self.n_metrics):
             name = self.alg_names[m] + ' ' + self.metric_names[n] + ' Heatmap'
             print(name)
-            A = self._get_array_of_sim_metrics(n, m)
+            A = self._get_array_of_sim_metrics(m)
             ax = sns.heatmap(np.transpose(A), annot=False)
             plt.xticks([])
             plt.yticks([])
@@ -1469,7 +1475,7 @@ class mlfd(object):
   
   def svm_region_contour(self, mode='save', filepath=''):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    colors = ['r', 'g', 'b', 'c', 'm']
+    colors = ['k', 'b', 'r', 'b', 'g', 'g']
     n_surf = 1000
     name = 'SVM Similarity Contour'
     if self.n_dims == 1:
@@ -1582,6 +1588,33 @@ class mlfd(object):
             if (self.n_dims == 3):
                 alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self._get_array_of_sim_metrics(m)))
         self.interps.append(alg_interps)
+  
+  def show_3d_similarity(self, mode='save', filepath=''):
+    self._interpolate_grid()
+    n_surf = 20
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    for m in range(self.n_algs):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        #A = self._get_array_of_sim_metrics(m)
+        xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+        ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+        znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+        #for i in range (self.grid_size):
+        #    for j in range (self.grid_size):
+        #        for k in range (self.grid_size):
+        #            ax.plot([self.x_vals[i]], [self.y_vals[j]], [self.z_vals[k]], colors[m] + '.', alpha=A[i][j][k])
+        plt.axis('off')
+        for i in range(n_surf):
+            for j in range(n_surf):
+                for k in range(n_surf):
+                    res = self.interps[0][m](np.array([xnew[i], ynew[j], znew[k]]).reshape(self.n_dims))
+                    print(res)
+                    ax.plot([xnew[i]], [ynew[j]], [znew[k]], colors[m] + '.', alpha=res[0])
+        if (mode == 'save'):
+            plt.savefig(filepath + '3d_similarity_Plot.png')
+        else:
+            plt.show()
   
   def plot_surfaces(self, mode='save', filepath=''):
     self._interpolate_grid()
@@ -2145,6 +2178,41 @@ def curvature_comparison(exp_data, num_data):
     L[-1,-2] = -2.
     err_abs = np.absolute(np.subtract(np.matmul(L, exp_data), np.matmul(L, num_data)))
     return np.sum(err_abs)
+
+def herons_formula(a, b, c):
+    s = (a + b + c) / 2.
+    return (s * (s - a) * (s - b) * (s - c))**0.5
+
+def swept_error_area(exp_data, num_data):
+    #naive approach
+    (n_points, n_dims) = np.shape(exp_data)
+    if not np.shape(exp_data) == np.shape(num_data):
+        print('Array dims must match!')
+    sum = 0.
+    for i in range(n_points - 1):
+        p1 = exp_data[i]
+        p2 = exp_data[i + 1]
+        p3 = num_data[i + 1]
+        p4 = num_data[i]
+        p1_p2_dist = get_euclidian_dist_any(p1, p2)
+        p1_p3_dist = get_euclidian_dist_any(p1, p3)
+        p1_p4_dist = get_euclidian_dist_any(p1, p4)
+        p2_p3_dist = get_euclidian_dist_any(p2, p3)
+        p3_p4_dist = get_euclidian_dist_any(p3, p4)
+        triangle1_area = herons_formula(p1_p4_dist, p1_p3_dist, p3_p4_dist)
+        triangle2_area = herons_formula(p1_p2_dist, p1_p3_dist, p2_p3_dist)
+        sum += triangle1_area + triangle2_area
+    return sum / n_points
+
+def sum_of_squared_error(exp_data, num_data):
+    #naive approach
+    (n_points, n_dims) = np.shape(exp_data)
+    if not np.shape(exp_data) == np.shape(num_data):
+        print('Array dims must match!')
+    sum = 0.
+    for i in range(n_points):
+        sum += (get_euclidian_dist_any(exp_data[i], num_data[i]))**2
+    return sum
 
 def main3():
     plt_fpath = '../pictures/lte_writing/test/'

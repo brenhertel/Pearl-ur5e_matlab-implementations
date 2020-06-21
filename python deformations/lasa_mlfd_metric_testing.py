@@ -34,8 +34,8 @@ lasa_names = ['Angle','BendedLine','CShape','DoubleBendedLine','GShape', \
 #                'Curvature_Conservation2', 'Endpoint_Convergence', 'Curve_Length', \
 #                'PCM', 'Area', 'DTW', 'Curve_Length2']
 
-def_metric_funx = [mlfd.sum_of_dists, mlfd.curvature_comparison]
-def_metric_names = ['sum_of_dists', 'curvature_comparison']
+def_metric_funx = [mlfd.swept_error_area, mlfd.sum_of_squared_error]
+def_metric_names = ['SEA', 'SSE']
 
 def get_lasa_traj1(shape_name):
     #ask user for the file which the playback is for
@@ -84,7 +84,7 @@ def main():
             my_mlfd.deform_traj(plot=False)
             if (j == 0):
                 my_mlfd.get_deform_grid_2d(mode='save', filepath=plt_fpath)
-                plt.plot(x, y, 'k')
+                plt.plot(x, y, 'k', linewidth=7)
                 plt.savefig(plt_fpath + lasa_names[i] + '_Original' + '.png')
                 plt.close('all')
             my_mlfd.calc_metrics(d_sample=True)

@@ -7,8 +7,9 @@ set metric_names=Haussdorff Frechet Curvature_Conservation2 Endpoint_Convergence
 
 for %%b in (%lasa_names%) do (
    echo %%b
-   set "name=Haussdorff"
-   set "fpath=%name%_%%b"
+   set "name=sum_of_dists"
+   echo !name!
+   set "fpath=!name!_%%b"
    echo !fpath!
    cd !fpath!
    set "fname=%%b_Original.png"
