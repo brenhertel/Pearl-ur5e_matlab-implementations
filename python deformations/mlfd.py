@@ -1321,7 +1321,7 @@ class mlfd(object):
                     print(X[(k * self.grid_size**2) + (j * self.grid_size) + (i)])
                     print(Y[(k * self.grid_size**2) + (j * self.grid_size) + (i)])
     self.tree = KDTree(X)
-    self.treeY = Y
+    self.Y = Y
     self.X = X
     self.clf = SVC()
     print(X)
@@ -1336,7 +1336,7 @@ class mlfd(object):
         res[m + 1][0] = m
     for p in range (new_k):
         for r in range (self.n_algs + 1):
-            if (res[r][0] == self.treeY[ind[0][p]]):
+            if (res[r][0] == self.Y[ind[0][p]]):
                 res[r][1] = res[r][1] + 1
     max_n, max_alg_ind = my_get_max_from_column(res, 1)
     if (max_alg_ind == 0):
@@ -1565,7 +1565,7 @@ class mlfd(object):
         Z = self.clf.predict(np.c_[xx.ravel(), yy.ravel(), zz.ravel()])
         Z = Z.reshape(xx.shape)
         ax.contourf(xx, yy, zz, Z, colors=colors, alpha=0.8)
-        ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k', markersize=30)
+        ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k*', markersize=30)
         ax.set_xticks(self.x_vals)
         ax.set_yticks(self.y_vals)
         ax.set_zticks(self.z_vals)
@@ -1669,6 +1669,36 @@ class mlfd(object):
             plt.savefig(filepath + '3d_similarity_Plot.png')
         else:
             plt.show()
+  
+  def show_3d_similarity_optimal(self, mode='save', filepath=''):
+    self._interpolate_grid()
+    n_surf = 20
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    #A = self._get_array_of_sim_metrics(m)
+    xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+    ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+    znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
+    #for i in range (self.grid_size):
+    #    for j in range (self.grid_size):
+    #        for k in range (self.grid_size):
+    #            ax.plot([self.x_vals[i]], [self.y_vals[j]], [self.z_vals[k]], colors[m] + '.', alpha=A[i][j][k])
+    plt.axis('off')
+    res = np.zeros((3));
+    for i in range(n_surf):
+        for j in range(n_surf):
+            for k in range(n_surf):
+                for m in range(self.n_algs):
+                    res[m] = self.interps[0][m](np.array([xnew[i], ynew[j], znew[k]]).reshape(self.n_dims))
+                val = max(res)
+                ind = np.argmax(res)
+                print(val)
+                ax.plot([xnew[i]], [ynew[j]], [znew[k]], colors[ind] + '.', alpha=val)
+    if (mode == 'save'):
+        plt.savefig(filepath + '3d_similarity_Plot.png')
+    else:
+        plt.show()
   
   def plot_svm_contour_3d(self, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
