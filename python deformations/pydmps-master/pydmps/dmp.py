@@ -24,7 +24,7 @@ class DMPs(object):
     as described in Dr. Stefan Schaal's (2002) paper."""
 
     def __init__(
-        self, n_dmps, n_bfs, dt=0.001, y0=0, goal=1, w=None, ay=None, by=None, **kwargs
+        self, n_dmps, n_bfs, dt=0.01, y0=0, goal=1, w=None, ay=None, by=None, **kwargs
     ):
         """
         n_dmps int: number of dynamic motor primitives
@@ -52,14 +52,14 @@ class DMPs(object):
         self.w = w
 
         self.ay = np.ones(n_dmps) * 25.0 if ay is None else np.ones(n_dmps) * ay  # Schaal 2012
-        #self.ay = np.ones(n_dmps) * 1000.0 if ay is None else np.ones(n_dmps) * ay
+        #self.ay = np.zeros(n_dmps) #* 1000.0 if ay is None else np.ones(n_dmps) * ay
         self.by = self.ay / 4.0 if by is None else np.ones(n_dmps) * by  # Schaal 2012
-        #self.by = np.ones(n_dmps) * 100.0
+        #self.by = np.zeros(n_dmps) #* 100.0
         
         # set up the CS
         self.cs = CanonicalSystem(dt=self.dt, **kwargs)
         self.timesteps = int(self.cs.run_time / self.dt)
-
+        #self.cs.ax = .10
         # set up the DMP system
         self.reset_state()
 

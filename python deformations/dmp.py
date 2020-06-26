@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 #uses code in the pydmps folder
 def perform_dmp(traj, given_points=0, alpha_y=None, beta_y=None):
   my_dt = 1.0 / max(np.shape(traj))
-  dmp = pydmps.dmp_discrete.DMPs_discrete(n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y, dt=my_dt)
+  dmp = pydmps.dmp_discrete.DMPs_discrete(dt=0.001, n_dmps=1, n_bfs=200, ay=alpha_y, by=beta_y)
   y_track = []
   dy_track = []
   ddy_track = []

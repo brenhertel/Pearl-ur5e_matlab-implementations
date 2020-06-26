@@ -395,7 +395,8 @@ class mlfd(object):
         print('WARNING: No trajectories given')
     self.grid_size = given_grid_size
     if dists == None:
-        dists = np.ones(self.n_dims) * (self.get_demo_dist() / 10.0)
+        K = 8.0
+        dists = np.ones(self.n_dims) * (self.get_demo_dist() / K)
     if (self.n_dims >= 1):
         center = point(self.org_x[0])
         grid_max_x = center.x + (dists[0] / 2)
@@ -430,20 +431,20 @@ class mlfd(object):
         self.grid_deforms_y = [[[traj() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities = [[[val() for m in range (self.n_algs)] for i in range (self.grid_size)] for j in range (self.grid_size)]
         self.grid_similarities_ind = [[[[val() for m in range (self.n_algs)] for n in range (self.n_metrics)] for i in range (self.grid_size)] for j in range (self.grid_size)]
-        plt.figure()
-        plt.axis('off')
-        plt.grid(b=None)
-        plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
+        #plt.figure()
+        #plt.axis('off')
+        #plt.grid(b=None)
+        #plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 self.grid[j][i].x = self.x_vals[j]
                 self.grid[j][i].y = self.y_vals[self.grid_size - 1 - i]
-                plt.plot(self.grid[j][i].x, self.grid[j][i].y, 'k.', markersize=20)
+                #plt.plot(self.grid[j][i].x, self.grid[j][i].y, 'k.', markersize=20)
         if (disp == True):
             for i in range (self.grid_size):
                 for j in range (self.grid_size):
                     print('X: %f, Y: %f' % (self.grid[i][j].x, self.grid[i][j].y))
-        plt.show()
+        #plt.show()
     if (self.n_dims == 3):
         self.grid = [[[point() for i in range (self.grid_size)] for j in range (self.grid_size)] for k in range (self.grid_size)]
         #self.grid_x, self.grid_y, self.grid_z = np.meshgrid(x_vals, y_vals, z_vals)
@@ -1430,6 +1431,53 @@ class mlfd(object):
             cur_sim_vals.append(sim_val)
     return cur_sim_vals
   
+  def reproduce_optimal_at_point(self, coords, plot=False, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    opt_alg_num = int(self.clf.predict(np.array(coords)))
+    opt_alg = self.algs[opt_alg_num]
+    name='Optimal_reproduction_at' + str(coords)
+    if self.n_dims == 1:
+        opt_x = opt_alg(self.org_x, coords[0][0])
+        if plot:
+            plt.plot(self.org_x, 'k')
+            plt.plot(opt_x, colors[opt_alg_num])
+            if (mode == 'save'):
+                plt.savefig(filepath + name + '.png')
+            else:
+                plt.show()
+            plt.close('all')
+        return opt_x
+    if self.n_dims == 2:
+        opt_x = opt_alg(self.org_x, coords[0][0])
+        opt_y = opt_alg(self.org_y, coords[0][1])
+        if plot: 
+            plt.plot(self.org_x, self.org_y, 'k', linewidth=7)
+            plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=20)
+            plt.plot(self.org_x[-1], self.org_y[-1], 'k.', markersize=20)
+            plt.plot(coords[0][0], coords[0][1], 'k+', markersize=20, mew=5)
+            plt.plot(opt_x, opt_y, colors[opt_alg_num], linewidth=5) 
+            plt.axis('off')
+            if (mode == 'save'):
+                plt.savefig(filepath + name + '.png')
+            else:
+                plt.show()
+            plt.close('all')
+        return [opt_x, opt_y]
+    if self.n_dims == 3:
+        opt_x = opt_alg(self.org_x, coords[0][0])
+        opt_y = opt_alg(self.org_y, coords[0][1])
+        opt_z = opt_alg(self.org_z, coords[0][2])
+        if plot:
+            ax = fig.add_subplot(111, projection='3d')
+            ax.plot(self.org_x, self.org_y, self.org_z, 'k')
+            ax.plot(opt_x, opt_y, opt_z, colors[opt_alg_num])
+            if (mode == 'save'):
+                plt.savefig(filepath + name + '.png')
+            else:
+                plt.show()
+            plt.close('all')
+        return [opt_x, opt_y, opt_z]
+  
   def generate_svm_region(self, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     n_surf = 20
@@ -1448,6 +1496,7 @@ class mlfd(object):
         for t in range (len(xnew)):
             for u in range (len(ynew)):
                 coords = np.array([[xnew[t][0], ynew[u][0]]])
+                #coords = np.array([[xnew[t], ynew[u]]])
                 #print(coords)
                 #print(self.clf.predict(coords))
                 plt.plot(xnew[t], ynew[u], colors[int(self.clf.predict(coords))] + '.')
@@ -1473,9 +1522,10 @@ class mlfd(object):
         plt.show()
     plt.close('all')
   
-  def svm_region_contour(self, mode='save', filepath=''):
+  def svm_region_contour(self, mode='save', filepath='', plot_point=None):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    colors = ['k', 'b', 'r', 'b', 'g', 'g']
+    colors = ['r', 'b', 'r', 'g', 'm', 'y', 'b', 'b']
+    #colors = ['k', 'b', 'r', 'b', 'g', 'g']
     n_surf = 1000
     name = 'SVM Similarity Contour'
     if self.n_dims == 1:
@@ -1500,8 +1550,12 @@ class mlfd(object):
                 #print(self.clf.predict(coords))
         #        plt.plot(xnew[t], ynew[u], colors[int(self.clf.predict(coords))] + '.')
         plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
+        if plot_point != None:
+            plt.plot(plot_point[0], plot_point[1], 'k+', markersize=30, mew=5) 
+            name = name + ' with reproduction at ' + str(plot_point)
         plt.xticks(self.x_vals)
-        plt.yticks(self.y_vals)           
+        plt.yticks(self.y_vals)  
+        plt.axis('off')
     if self.n_dims == 3:
         xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
         ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
@@ -1616,6 +1670,21 @@ class mlfd(object):
         else:
             plt.show()
   
+  def plot_svm_contour_3d(self, mode='save', filepath=''):
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    z = lambda x,y: (-self.clf.intercept_[0]-self.clf.coef_[0][0]*x -self.clf.coef_[0][1]*y) / self.clf.coef_[0][2]
+    
+    #tmp = np.linspace(-5,5,30)
+    x,y = np.meshgrid(self.x_vals,self.y_vals)
+    
+    fig = plt.figure()
+    ax  = fig.add_subplot(111, projection='3d')
+    ax.plot3D(self.X[self.Y==0,0], self.X[self.Y==0,1], self.X[self.Y==0,2],'ob')
+    ax.plot3D(self.X[self.Y==1,0], self.X[self.Y==1,1], self.X[self.Y==1,2],'sr')
+    ax.plot_surface(x, y, z(x,y))
+    #ax.view_init(30, 60)
+    plt.show()
+    
   def plot_surfaces(self, mode='save', filepath=''):
     self._interpolate_grid()
     n_surf = 100
@@ -1784,7 +1853,7 @@ class mlfd(object):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     fig = plt.figure()
     plt.plot(self.org_x, self.org_y, 'k', linewidth=6.0)
-    plt.plot(self.org_x[0], self.org_y[0], 'k+', markersize=20)
+    plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=20)
     plt.plot(self.org_x[self.traj_len - 1], self.org_y[self.traj_len - 1], 'ko', markersize=20)
     for m in range (self.n_algs):
         if (m == alg):

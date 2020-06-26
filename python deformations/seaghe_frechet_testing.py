@@ -68,12 +68,14 @@ def main():
             #my_mlfd.calc_metrics(d_sample=True)
             #my_mlfd.save_results(plt_fpath + metric_name + '_' + lasa_names[i] + '.h5')
             my_mlfd.read_from_h5(plt_fpath + metric_name + '_' + lasa_names[i] + '.h5')
-            #my_mlfd.set_up_classifier(threshold=0.3)
-            #my_mlfd.svm_region_contour(filepath=plt_fpath)
+            my_mlfd.set_up_classifier()
+            my_mlfd.svm_region_contour(mode='show')
             #my_mlfd.generate_svm_region(filepath=plt_fpath)
             #my_mlfd.reproduce_at_point(np.array([[x[0][0] + 5, y[0][0] - 5]]), plot=True)
             #my_mlfd.plot_strongest_gradients(mode='save', filepath=plt_fpath)
-            my_mlfd.plot_sim_hmap(mode='save', filepath=plt_fpath)
+            #my_mlfd.plot_sim_hmap(mode='save', filepath=plt_fpath)
+            my_mlfd.reproduce_optimal_at_point(np.array([[x[0][0] + 1.5, y[0][0] - 1.5]]), plot=True)
+            my_mlfd.svm_region_contour(mode='show', plot_point=[x[0][0] + 1.5, y[0][0] - 1.5])
      
 if __name__ == '__main__':
   main()
