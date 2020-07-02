@@ -89,6 +89,7 @@ def my_get_max_from_column(A, col):
 #n (optional): the number of points to be in the downsampled trajectory. Default is 100.
 #returns the trajectory downsampled to n points
 def downsample_1d(traj, n=100):
+    #print(np.shape(traj))
     npts = np.linspace(0, len(traj) - 1, n)
     out = np.zeros((n))
     #print(np.shape(traj))
@@ -98,6 +99,7 @@ def downsample_1d(traj, n=100):
             traj = np.transpose(traj)
     for i in range (n):
         out[i] = traj[int(npts[i])]
+    #print(np.shape(out))
     return out
 
 #simple function to get the euclidean distance between 2 2D points
@@ -505,8 +507,9 @@ class mlfd(object):
                         #print(self.grid_deforms_x[i][j][k][m].traj)
                         if plot == True:
                             print('Plotting a grid of 3D plots is too hard!')
-    plt.show()
-    plt.close('all')
+    if plot == True:
+        plt.show()
+        plt.close('all')
     
   def get_deform_grid_2d(self, mode='show', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -1468,6 +1471,7 @@ class mlfd(object):
         opt_y = opt_alg(self.org_y, coords[0][1])
         opt_z = opt_alg(self.org_z, coords[0][2])
         if plot:
+            fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
             ax.plot(self.org_x, self.org_y, self.org_z, 'k')
             ax.plot(opt_x, opt_y, opt_z, colors[opt_alg_num])
@@ -1476,12 +1480,12 @@ class mlfd(object):
             else:
                 plt.show()
             plt.close('all')
-        return [opt_x, opt_y, opt_z]
+        return [opt_x, opt_y, opt_z, self.alg_names[opt_alg_num]]
   
   def generate_svm_region(self, mode='save', filepath=''):
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     n_surf = 20
-    name = 'SVM Similarity'
+    name = 'SVM Similarity Region'
     if self.n_dims == 1:
         xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
         fig = plt.figure()
@@ -1511,21 +1515,21 @@ class mlfd(object):
         for t in range (len(xnew)):
             for u in range (len(ynew)):
                 for v in range (len(znew)):
-                    ax.scatter(xnew[t], ynew[u], c=colors[int(self.clf.predict(np.array([[xnew[t], ynew[u], znew[v]]])))])
+                    if (int(self.clf.predict(np.array([[xnew[t], ynew[u], znew[v]]]))) == 1):
+                        print([[xnew[t], ynew[u], znew[v]]])
+                    ax.scatter(xnew[t], ynew[u], znew[v], c=colors[int(self.clf.predict(np.array([[xnew[t], ynew[u], znew[v]]])))])
         ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k')
-        ax.set_xticks(self.x_vals)
-        ax.set_yticks(self.y_vals)
-        ax.set_zticks(self.z_vals)
+        plt.axis('off')
     if (mode == 'save'):
         plt.savefig(filepath + name + '.png')
     else:
         plt.show()
     plt.close('all')
   
-  def svm_region_contour(self, mode='save', filepath='', plot_point=None):
+  def svm_region_contour(self, mode='save', filepath='', plot_point=None, z_val=None):
     #colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    colors = ['r', 'b', 'r', 'g', 'm', 'y', 'b', 'b']
-    #colors = ['k', 'b', 'r', 'b', 'g', 'g']
+    #colors = ['r', 'b', 'g', 'g', 'm', 'y', 'g', 'b']
+    colors = ['r', 'b', 'b', 'g', 'm', 'y']
     n_surf = 1000
     name = 'SVM Similarity Contour'
     if self.n_dims == 1:
@@ -1557,18 +1561,33 @@ class mlfd(object):
         plt.yticks(self.y_vals)  
         plt.axis('off')
     if self.n_dims == 3:
+        if (z_val == None):
+            print('Please give a z index for the image slice')
+            return
+        name = name + ' at z=' + str(self.z_vals[z_val])
         xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
         ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
-        znew = np.linspace(self.z_vals[0], self.z_vals[self.grid_size - 1], n_surf)
-        ax = plt.axes(projection='3d')
-        xx, yy, zz = np.meshgrid(xnew, ynew, znew)
+        znew = np.linspace(self.z_vals[z_val], self.z_vals[z_val], n_surf)
+        fig = plt.figure()
+        xx, yy = np.meshgrid(xnew, ynew)
+        zz = np.ones(np.shape(xx)) * self.z_vals[z_val]
         Z = self.clf.predict(np.c_[xx.ravel(), yy.ravel(), zz.ravel()])
         Z = Z.reshape(xx.shape)
-        ax.contourf(xx, yy, zz, Z, colors=colors, alpha=0.8)
-        ax.scatter(self.org_x[0], self.org_y[0], self.org_z[0], c='k*', markersize=30)
-        ax.set_xticks(self.x_vals)
-        ax.set_yticks(self.y_vals)
-        ax.set_zticks(self.z_vals)
+        plt.contourf(xx, yy, Z, colors=colors, alpha=0.8)
+        #for t in range (len(xnew)):
+            #for u in range (len(ynew)):
+                #coords = np.array([[xnew[t][0], ynew[u][0]]])
+                #print(coords)
+                #print(self.clf.predict(coords))
+        #        plt.plot(xnew[t], ynew[u], colors[int(self.clf.predict(coords))] + '.')
+        if (z_val == math.floor(self.grid_size / 2)):
+            plt.plot(self.org_x[0], self.org_y[0], 'k*', markersize=30)
+        if plot_point != None:
+            plt.plot(plot_point[0], plot_point[1], 'k+', markersize=30, mew=5) 
+            name = name + ' with reproduction at ' + str(plot_point)
+        plt.xticks(self.x_vals)
+        plt.yticks(self.y_vals)  
+        plt.axis('off')
     if (mode == 'save'):
         plt.savefig(filepath + name + '.png')
     else:
@@ -1581,9 +1600,15 @@ class mlfd(object):
         B = np.zeros((self.grid_size, 3))
         for i in range (self.grid_size):
             if A[i] == 0:
-                B[i][0] = 255
+                #red
+                B[i][0] = 207
+                B[i][1] = 113
+                B[i][2] = 117
             elif A[i] == 1:
-                B[i][1] = 255
+                #green
+                B[i][0] = 119
+                B[i][1] = 185
+                B[i][2] = 134
             elif A[i] == 2:
                 B[i][2] = 255
             elif A[i] == 3:
@@ -1598,13 +1623,19 @@ class mlfd(object):
             else:
                 print('Too many algorithms to represent color')
     if self.n_dims == 2:
-        B = np.zeros((self.grid_size, self.grid_size, 3))
+        B = np.full((self.grid_size, self.grid_size, 3), 0)
         for i in range (self.grid_size):
             for j in range (self.grid_size):
                 if A[i][j] == 0:
-                    B[i][j][0] = 255
+                    #red
+                    B[i][j][0] = 207
+                    B[i][j][1] = 113
+                    B[i][j][2] = 117
                 elif A[i][j] == 1:
-                    B[i][j][1] = 255
+                    #green
+                    B[i][j][0] = 119
+                    B[i][j][1] = 185
+                    B[i][j][2] = 134
                 elif A[i][j] == 2:
                     B[i][j][2] = 255
                 elif A[i][j] == 3:
@@ -1643,8 +1674,8 @@ class mlfd(object):
                 alg_interps.append(RegularGridInterpolator((np.reshape(self.x_vals, (self.grid_size)), np.reshape(self.y_vals, (self.grid_size)), np.reshape(self.z_vals, (self.grid_size))), self._get_array_of_sim_metrics(m)))
         self.interps.append(alg_interps)
   
+  
   def show_3d_similarity(self, mode='save', filepath=''):
-    self._interpolate_grid()
     n_surf = 20
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     for m in range(self.n_algs):
@@ -1696,24 +1727,34 @@ class mlfd(object):
                 print(val)
                 ax.plot([xnew[i]], [ynew[j]], [znew[k]], colors[ind] + '.', alpha=val)
     if (mode == 'save'):
-        plt.savefig(filepath + '3d_similarity_Plot.png')
+        plt.savefig(filepath + '3d_similarity_Plot_Optimal.png')
     else:
         plt.show()
   
-  def plot_svm_contour_3d(self, mode='save', filepath=''):
-    colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    z = lambda x,y: (-self.clf.intercept_[0]-self.clf.coef_[0][0]*x -self.clf.coef_[0][1]*y) / self.clf.coef_[0][2]
-    
-    #tmp = np.linspace(-5,5,30)
-    x,y = np.meshgrid(self.x_vals,self.y_vals)
-    
-    fig = plt.figure()
-    ax  = fig.add_subplot(111, projection='3d')
-    ax.plot3D(self.X[self.Y==0,0], self.X[self.Y==0,1], self.X[self.Y==0,2],'ob')
-    ax.plot3D(self.X[self.Y==1,0], self.X[self.Y==1,1], self.X[self.Y==1,2],'sr')
-    ax.plot_surface(x, y, z(x,y))
-    #ax.view_init(30, 60)
-    plt.show()
+  def get_image_slices(self, mode='save', filepath=''):
+    for i in range(self.grid_size):
+        self.svm_region_contour(mode=mode, filepath=filepath, z_val=i)
+    #colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    #n_surf = 200;
+    #xnew = np.linspace(self.x_vals[0], self.x_vals[self.grid_size - 1], n_surf)
+    #ynew = np.linspace(self.y_vals[0], self.y_vals[self.grid_size - 1], n_surf)
+    #for k in range(self.grid_size):
+    #    fig = plt.figure;
+    #    name = 'SVM Similarity at z=' + str(self.z_vals[k])
+    #    for i in range(n_surf):
+    #        for j in range(n_surf):
+    #            coords = [[xnew[i], ynew[j], self.z_vals[k]]]
+    #            opt_alg_num = int(self.clf.predict(np.array(coords)))
+    #            #plt.plot(xnew[i], ynew[j], colors[opt_alg_num] + '.', markersize=1)
+    #            #plt.xticks(self.x_vals)
+    #            #plt.yticks(self.y_vals)  
+    #            plt.axis('off')
+    #    plt.contourf(xx, yy, Z, colors=colors, alpha=0.8)
+    #    if (mode == 'save'):
+    #        plt.savefig(filepath + name + '.png')
+    #    else:
+    #        plt.show()
+    #plt.close('all')
     
   def plot_surfaces(self, mode='save', filepath=''):
     self._interpolate_grid()

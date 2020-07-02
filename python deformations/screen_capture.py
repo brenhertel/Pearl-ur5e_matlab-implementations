@@ -52,6 +52,7 @@ def save_data(X,Y):
 def draw_result(X,Y):
     print("Data can be saved after closing the plot.")
     t = np.linspace(0,1,len(X))
+    tt = np.linspace(0,1,1000)
     print(len(t))
     fx = interp1d(t,np.array(X), kind = 'cubic')
     fy = interp1d(t,np.array(Y), kind = 'cubic')
@@ -63,7 +64,7 @@ def draw_result(X,Y):
     plt.xlabel("x")
     plt.ylabel("inverted y")
     plt.show()
-    save_data(fx(t),fy(t))
+    save_data(fx(tt),fy(tt))
     
 def main():
     pygame.init()

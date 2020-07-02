@@ -9,6 +9,12 @@ import os
 import matplotlib.pyplot as plt
 import similaritymeasures
 
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, 'C:/Users/BH/Documents/GitHub/Pearl-ur5e_matlab-implementations/python deformations/dmp_for_comparison/')
+
+import perform_new_dmp as pnd
+
 data_names = ['Crooked_Line']
 
 
@@ -45,13 +51,13 @@ def main():
             my_mlfd.add_traj_dimension(y, 'y')
             my_mlfd.add_deform_alg(ja.perform_ja_improved, 'JA')
             my_mlfd.add_deform_alg(lte.perform_lte_improved, 'LTE')
-            my_mlfd.add_deform_alg(dmp.perform_dmp_improved, 'DMP')
+            my_mlfd.add_deform_alg(pnd.perform_new_dmp_adapted, 'DMP')
             my_mlfd.add_metric(metric_funx[j], type='Frechet', name=metric_name, weight=1.0, is_dissim=True)
             my_mlfd.create_grid(9, [5, 5])
-            my_mlfd.deform_traj(plot=False)
-            my_mlfd.get_deform_grid_2d(mode='save', filepath=plt_fpath)
-            my_mlfd.calc_metrics(d_sample=True)
-            my_mlfd.save_results(plt_fpath + metric_name + '_' + data_names[i] + '.h5')
+            #my_mlfd.deform_traj(plot=False)
+            #my_mlfd.get_deform_grid_2d(mode='save', filepath=plt_fpath)
+            #my_mlfd.calc_metrics(d_sample=True)
+            #my_mlfd.save_results(plt_fpath + metric_name + '_' + data_names[i] + '.h5')
             my_mlfd.read_from_h5(plt_fpath + metric_name + '_' + data_names[i] + '.h5')
             my_mlfd.set_up_classifier()
             my_mlfd.svm_region_contour(filepath=plt_fpath)

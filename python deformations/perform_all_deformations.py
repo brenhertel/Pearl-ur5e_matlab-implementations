@@ -5,7 +5,13 @@ import h5py
 import matplotlib.pyplot as plt
 import lte
 import ja
-import dmp
+#import perform_pydmps
+
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, 'C:/Users/BH/Documents/GitHub/Pearl-ur5e_matlab-implementations/python deformations/dmp_for_comparison/')
+
+import perform_new_dmp as pnd
 
 def get_lasa_traj():
     #ask user for the file which the playback is for
@@ -43,7 +49,9 @@ def perform_all_deformations(traj, initial=[], end=[], lmbda=-1.0):
   ja_fixed_points = ja.generate_ja_fixed_points(np.array([[initial], [end]]))
   ja_traj = ja.perform_ja(traj, ja_fixed_points, lmbda)
   ## DMP ##
-  dmp_traj = dmp.perform_dmp(traj, [initial, end])
+  traj = np.reshape(traj, (np.size(traj)))
+  new_dt = 1.0 / np.size(traj)
+  dmp_traj = pnd.perform_new_dmp_adapted(traj, initial, end, dt=new_dt)
   return [lte_traj, ja_traj, dmp_traj]
 
 def perform_all_deformations_no_dmp(traj, initial=[], end=[], lmbda=-1.0):

@@ -15,7 +15,7 @@ lasa_names = ['Angle','BendedLine','CShape','DoubleBendedLine','GShape', \
              'Leaf_2','Line','LShape','NShape','PShape', \
              'RShape','Saeghe','Sharpc','Sine','Snake', \
              'Spoon','Sshape','Trapezoid','Worm','WShape', \
-             'Zshape','Multi_Models_1','Multi_Models_2','Multi_Models_3','Multi_Models_4']
+             'Zshape'] #'Multi_Models_1','Multi_Models_2','Multi_Models_3','Multi_Models_4']
 
 
 #metric_funx = [mlfd.my_hd2, mlfd.my_fd2, mlfd.my_dtw2, mlfd.my_curvature_conservation2, \
@@ -35,8 +35,8 @@ lasa_names = ['Angle','BendedLine','CShape','DoubleBendedLine','GShape', \
 #                'Curvature_Conservation2', 'Endpoint_Convergence', 'Curve_Length', \
 #                'PCM', 'Area', 'DTW', 'Curve_Length2']
 
-metric_funx = [mlfd.swept_error_area, mlfd.sum_of_squared_error]
-metric_names = ['SEA', 'SSE']
+metric_funx = [mlfd.swept_error_area]
+metric_names = ['sum_of_dists']
 
 def get_lasa_traj1(shape_name):
     #ask user for the file which the playback is for
@@ -65,7 +65,7 @@ def main():
         for j in range(len(metric_names)):
             metric_name = metric_names[j]
             old_fpath = 'mlfd_metrics/LTE_FJA_tests/' + metric_name + '_' + lasa_names[i] + '/'
-            new_fpath = 'mlfd_metrics/LTE_FJA_threshold_tests/' + metric_name + '_' + lasa_names[i] + '/'
+            new_fpath = 'mlfd_metrics/LTE_FJA_new_threshold_tests/' + metric_name + '_' + lasa_names[i] + '/'
             try:
                 os.makedirs(new_fpath)
             except OSError:
